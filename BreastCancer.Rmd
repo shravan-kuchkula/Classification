@@ -1,0 +1,196 @@
+---
+title: "BreastCancer Wisconsin Diagnostic dataset"
+author: "Shravan Kuchkula"
+date: "10/22/2017"
+output:
+  github_document:
+    toc: yes
+  html_document:
+    keep_md: yes
+    theme: cosmo
+    toc: yes
+  pdf_document:
+    fig_caption: yes
+    highlight: zenburn
+---
+
+## Introduction
+Features are computed from a digitized image of a fine needle	aspirate (FNA) of a breast mass.  They describe	characteristics of the cell nuclei present in the image.
+
+## Data set
+Breast Cancer Wisconsin data set from the [*UCI Machine learning repo*](http://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29) is used to conduct the analysis. 
+
+## Importing and Cleaning the data
+
+Before importing, let's first load the required libraries.
+
+```{r message=FALSE, warning=FALSE}
+source('libraries.R')
+```
+
+Using read.csv we can download the dataset as shown:
+
+```{r}
+url <- "http://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data"
+
+# use read_csv to the read into a dataframe
+# columnNames are missing in the above link, so we need to give them manually.
+columnNames <- c("id","diagnosis","radius_mean","texture_mean","perimeter_mean",
+                 "area_mean","smoothness_mean","compactness_mean","concavity_mean",
+                 "concave_points_mean","symmetry_mean","fractal_dimension_mean",
+                 "radius_se","texture_se","perimeter_se","area_se","smoothness_se",
+                 "compactness_se","concavity_se","concave_points_se","symmetry_se",
+                 "fractal_dimension_se","radius_worst","texture_worst","perimeter_worst",
+                 "area_worst","smoothness_worst","compactness_worst","concavity_worst",
+                 "concave_points_worst","symmetry_worst","fractal_dimension_worst")
+#wdbc <- read_csv(url, col_names = columnNames, col_types = NULL)
+wdbc <- read.csv(url, header = FALSE, col.names = columnNames)
+```
+
+Let's take a peak
+```{r}
+glimpse(wdbc)
+```
+
+## Exploratory Data Analysis
+Our response variable is diagnosis: Benign (B) or Malignant (M).
+We have 3 sets of 10 numeric variables: mean, se, worst
+
+Let's first collect all the 30 numeric variables into a matrix
+
+```{r}
+# Convert the features of the data: wdbc.data
+wdbc.data <- as.matrix(wdbc[,c(3:32)])
+
+# Set the row names of wdbc.data
+row.names(wdbc.data) <- wdbc$id
+
+# Create diagnosis vector
+diagnosis <- as.numeric(wdbc$diagnosis == "M")
+```
+
+Let's answer some basic questions:
+
+### How many observations are in this dataset ?
+```{r}
+nrow(wdbc.data)
+```
+
+### How many variables/features in the data are suffixed with _mean, _se, _worst?
+```{r}
+sum(endsWith(colnames(wdbc.data), "_mean"))
+sum(endsWith(colnames(wdbc.data), "_se"))
+sum(endsWith(colnames(wdbc.data), "_worst"))
+```
+
+### How many observations have benign or malignant diagnosis ?
+```{r}
+table(wdbc$diagnosis)
+```
+ 
+### What is the mean of each of the numeric columns ?
+```{r}
+colMeans(wdbc.data)
+```
+
+### What is the sd of each of the numeric columns ?
+```{r}
+apply(wdbc.data, 2, sd)
+```
+
+## PCA
+Due to the number of variables in the model, we can try using a dimentionality reduction technique to unveil any patterns in the data. It also helps in visualizing a multi-dimentional dataset like this.
+
+The first step in doing a PCA, is to ask ourselves whether or not the data should be scaled to unit variance. That is, to bring all the numeric variables to the same scale.
+
+Based on the output from `mean` and `sd`, it does appear that some variables have larger variance, e.g. symmetry_se. Hence we should use scaling. (will get this later and prove why we need to scale)
+
+Running PCA:
+
+```{r}
+wdbc.pr <- prcomp(wdbc.data, scale = TRUE, center = TRUE)
+summary(wdbc.pr)
+```
+
+84.73% of the variation is explained by the first five PC's.
+
+### Bi-Plot
+
+Let's create a bi-plot to visualize this:
+```{r}
+biplot(wdbc.pr)
+```
+
+From the above bi-plot of PC1 vs PC2, we can see that all these variables are trending in the same direction and most of them are highly correlated (More on this .. we can visualize this in a corrplot)
+
+Create a scatter plot of observations by components 1 and 2
+```{r}
+# Scatter plot observations by components 1 and 2
+plot(wdbc.pr$x[, c(1, 2)], col = (diagnosis + 1), 
+     xlab = "PC1", ylab = "PC2")
+```
+
+There is a clear seperation of diagnosis (M or B) that is evident in the PC1 vs PC2 plot.
+
+Let's also take PC1 vs PC3 plot:
+```{r}
+# Repeat for components 1 and 3
+plot(wdbc.pr$x[, c(1,3)], col = (diagnosis + 1), 
+     xlab = "PC1", ylab = "PC3")
+```
+
+Because principal component 2 explains more variance in the original data than principal component 3, you can see that the first plot has a cleaner cut separating the two subgroups.
+
+### Scree plots
+
+Scree plots can be useful in deciding how many PC's we should keep in the model. Let's create the scree-plots in R. As there is no R function to create a scree-plot, we need to prepare the data for the plot.
+
+```{r}
+# Set up 1 x 2 plotting grid
+par(mfrow = c(1, 2))
+
+# Calculate variability of each component
+pr.var <- wdbc.pr$sdev ^ 2
+
+# Variance explained by each principal component: pve
+pve <- pr.var/sum(pr.var)
+```
+
+Create a plot of variance explained for each principal component.
+
+```{r}
+# Plot variance explained for each principal component
+plot(pve, xlab = "Principal Component", 
+     ylab = "Proportion of Variance Explained", 
+     ylim = c(0, 1), type = "b")
+
+# Plot cumulative proportion of variance explained
+plot(cumsum(pve), xlab = "Principal Component", 
+     ylab = "Cumulative Proportion of Variance Explained", 
+     ylim = c(0, 1), type = "b")
+```
+
+Scree-plots suggest that 80% of the variation in the numeric data is captured in the first 5 PCs.
+
+## LDA
+As found in the PCA analysis, we can keep 5 PCs in the model. Our next task is to use the first 5 PCs to build a Linear discriminant function using the `lda()` function in R. 
+
+## Splitting the dataset into training/test data
+When creating the LDA model, we can split the data into training and test data. Using the training data we can build the LDA function. Next, we use the test data to make predictions. 
+
+## Cross validation
+A simple way to validate the accuracy of our model in predicting diagnosis (M or B) is to compare the test data result to the observed data. Find the proportion of the errors in prediction and see whether our model is acceptable. 
+
+An advanced way of validating the accuracy of our model is by using a k-fold cross-validation. 
+
+## Conclusion
+
+
+
+
+
+
+
+
+
+
