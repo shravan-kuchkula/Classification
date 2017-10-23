@@ -329,15 +329,183 @@ LDA
 
 As found in the PCA analysis, we can keep 5 PCs in the model. Our next task is to use the first 5 PCs to build a Linear discriminant function using the `lda()` function in R.
 
+From the `wdbc.pr` object, we need to extract the first five PC's. To do this, let's first check the variables available for this object.
+
+``` r
+ls(wdbc.pr)
+```
+
+    ## [1] "center"   "rotation" "scale"    "sdev"     "x"
+
+We are interested in the `rotation` (also called loadings) of the first five principal components multiplied by the scaled data, which are called `scores` (basically PC transformed data)
+
+``` r
+wdbc.pcs <- wdbc.pr$x[,1:5]
+head(wdbc.pcs, 20)
+```
+
+    ##                 PC1          PC2        PC3         PC4         PC5
+    ## 842302   -9.1847552  -1.94687003 -1.1221788  3.63053641  1.19405948
+    ## 842517   -2.3857026   3.76485906 -0.5288274  1.11728077 -0.62122836
+    ## 84300903 -5.7288555   1.07422859 -0.5512625  0.91128084  0.17693022
+    ## 84348301 -7.1166913 -10.26655564 -3.2299475  0.15241292  2.95827543
+    ## 84358402 -3.9318425   1.94635898  1.3885450  2.93805417 -0.54626674
+    ## 843786   -2.3781546  -3.94645643 -2.9322967  0.94020959  1.05511354
+    ## 844359   -2.2369151   2.68766641 -1.6384712  0.14920860 -0.04032404
+    ## 84458202 -2.1414143  -2.33818665 -0.8711807 -0.12693117  1.42618178
+    ## 844981   -3.1721332  -3.38883114 -3.1172431 -0.60076844  1.52095211
+    ## 84501001 -6.3461628  -7.72038095 -4.3380987 -3.37223437 -1.70875961
+    ## 845636    0.8097013   2.65693767 -0.4884001 -1.67109618 -0.27556910
+    ## 84610002 -2.6487698  -0.06650941 -1.5251134  0.05121650 -0.33165929
+    ## 846226   -8.1778388  -2.69860201  5.7251932 -1.11127875 -1.04255311
+    ## 846381   -0.3418251   0.96742803  1.7156620 -0.59447987 -0.46759907
+    ## 84667401 -4.3385617  -4.85680983 -2.8136398 -1.45327830 -1.28892873
+    ## 84799002 -4.0720732  -2.97444398 -3.1225267 -2.45590991  0.40798314
+    ## 848406   -0.2298528   1.56338211 -0.8018136 -0.65001097  0.49427614
+    ## 84862001 -4.4141269  -1.41742315 -2.2683231 -0.18610866  1.42260945
+    ## 849014   -4.9443530   4.11071653 -0.3144724 -0.08812897  0.05666532
+    ## 8510426   1.2359758   0.18804949 -0.5927619  1.59494272  0.44176553
+
+Here, the rownames help us see how the PC transformed data looks like.
+
+Now, we need to append the `diagnosis` column to this PC transformed data frame `wdbc.pcs`. Let's call the new data frame as `wdbc.pcst`.
+
+``` r
+wdbc.pcst <- wdbc.pcs
+wdbc.pcst <- cbind(wdbc.pcs, diagnosis)
+head(wdbc.pcst)
+```
+
+    ##                PC1        PC2        PC3       PC4        PC5 diagnosis
+    ## 842302   -9.184755  -1.946870 -1.1221788 3.6305364  1.1940595         1
+    ## 842517   -2.385703   3.764859 -0.5288274 1.1172808 -0.6212284         1
+    ## 84300903 -5.728855   1.074229 -0.5512625 0.9112808  0.1769302         1
+    ## 84348301 -7.116691 -10.266556 -3.2299475 0.1524129  2.9582754         1
+    ## 84358402 -3.931842   1.946359  1.3885450 2.9380542 -0.5462667         1
+    ## 843786   -2.378155  -3.946456 -2.9322967 0.9402096  1.0551135         1
+
+Here, diagnosis == 1 represents malignant and diagnosis == 0 represents benign.
+
 Splitting the dataset into training/test data
 ---------------------------------------------
 
 When creating the LDA model, we can split the data into training and test data. Using the training data we can build the LDA function. Next, we use the test data to make predictions.
 
+``` r
+# Calculate N
+N <- nrow(wdbc.pcst)
+
+# Create a random number vector
+rvec <- runif(N)
+
+# Select rows from the dataframe
+wdbc.pcst.train <- wdbc.pcst[rvec < 0.75,]
+wdbc.pcst.test <- wdbc.pcst[rvec >= 0.75,]
+
+# Check the number of observations
+nrow(wdbc.pcst.train)
+```
+
+    ## [1] 411
+
+``` r
+nrow(wdbc.pcst.test)
+```
+
+    ## [1] 158
+
+So, 433 observations are in training dataset and 136 observations are in the test dataset. We will use the training dataset to calculate the `linear discriminant function` by passing it to the `lda()` function of the `MASS` package.
+
+``` r
+library(MASS)
+
+wdbc.pcst.train.df <- wdbc.pcst.train
+
+# convert matrix to a dataframe
+wdbc.pcst.train.df <- as.data.frame(wdbc.pcst.train)
+
+# Perform LDA on diagnosis
+wdbc.lda <- lda(diagnosis ~ PC1 + PC2 + PC3 + PC4 + PC5, data = wdbc.pcst.train.df)
+```
+
+Let's summarize the LDA output:
+
+``` r
+wdbc.lda
+```
+
+    ## Call:
+    ## lda(diagnosis ~ PC1 + PC2 + PC3 + PC4 + PC5, data = wdbc.pcst.train.df)
+    ## 
+    ## Prior probabilities of groups:
+    ##         0         1 
+    ## 0.6666667 0.3333333 
+    ## 
+    ## Group means:
+    ##         PC1        PC2        PC3        PC4        PC5
+    ## 0  2.197658 -0.2174524  0.1430652  0.1122101 -0.1678296
+    ## 1 -3.497758  0.4752905 -0.3617218 -0.2070868  0.1681842
+    ## 
+    ## Coefficients of linear discriminants:
+    ##            LD1
+    ## PC1 -0.4941127
+    ## PC2  0.1679643
+    ## PC3 -0.1783100
+    ## PC4 -0.1910751
+    ## PC5  0.2062614
+
+Let's use this to predict by passing the predict function's newdata as the testing dataset.
+
+``` r
+wdbc.pcst.test.df <- wdbc.pcst.test
+
+# convert matrix to a dataframe
+wdbc.pcst.test.df <- as.data.frame(wdbc.pcst.test)
+
+wdbc.lda.predict <- predict(wdbc.lda, newdata = wdbc.pcst.test.df)
+```
+
+Let's check what functions we can invoke on this predict object:
+
+``` r
+ls(wdbc.lda.predict)
+```
+
+    ## [1] "class"     "posterior" "x"
+
+Our predictions are contained in the `class` attribute.
+
+``` r
+# print the predictions
+(wdbc.lda.predict.class <- wdbc.lda.predict$class)
+```
+
+    ##   [1] 1 1 1 1 1 0 1 1 1 1 1 0 1 1 1 1 1 0 0 1 0 1 0 0 1 0 1 0 0 0 0 0 1 1 1
+    ##  [36] 0 0 1 0 1 0 0 0 0 0 1 1 0 1 0 0 1 1 0 1 0 0 0 1 1 1 1 0 1 1 0 0 0 0 0
+    ##  [71] 1 0 1 1 0 1 0 0 1 1 0 1 0 1 1 1 0 0 0 1 0 0 0 1 1 1 0 0 0 0 1 0 0 0 0
+    ## [106] 1 1 0 1 0 1 0 0 1 0 0 0 1 0 0 0 1 0 1 0 1 1 1 0 1 0 0 0 0 0 0 0 0 0 1
+    ## [141] 0 0 0 1 0 0 1 0 0 1 0 0 0 0 0 1 1 1
+    ## Levels: 0 1
+
+Next, compare the accuracy of these predictions with the original data.
+
 Cross validation
 ----------------
 
 A simple way to validate the accuracy of our model in predicting diagnosis (M or B) is to compare the test data result to the observed data. Find the proportion of the errors in prediction and see whether our model is acceptable.
+
+``` r
+table(wdbc.lda.predict.class, wdbc.pcst.test.df$diagnosis)
+```
+
+    ##                       
+    ## wdbc.lda.predict.class  0  1
+    ##                      0 83  5
+    ##                      1  0 70
+
+So according to this output, the model predicted 87 times that the diagnosis is 0 (benign) when the actual observation was 0 (benign) and 10 times it predicted incorrectly. Similarly, the model predicted that the diagnosis is 1 (malignant) and once predicted incorrectly.
+
+The accuracy of this model in predicting benign tumors is 87/97 = 0.8969 or 89.69% accurate. The accuracy of this model in predicting malignant tumors is 38/39 = 0.9743 or 97.43% accurate.
 
 An advanced way of validating the accuracy of our model is by using a k-fold cross-validation.
 
