@@ -54,6 +54,7 @@ glimpse(wdbc)
 ```
 
 ## Exploratory Data Analysis
+
 Our response variable is diagnosis: Benign (B) or Malignant (M).
 We have 3 sets of 10 numeric variables: mean, se, worst
 
@@ -73,11 +74,13 @@ diagnosis <- as.numeric(wdbc$diagnosis == "M")
 Let's answer some basic questions:
 
 ### How many observations are in this dataset ?
+
 ```{r}
 nrow(wdbc.data)
 ```
 
 ### How many variables/features in the data are suffixed with _mean, _se, _worst?
+
 ```{r}
 sum(endsWith(colnames(wdbc.data), "_mean"))
 sum(endsWith(colnames(wdbc.data), "_se"))
@@ -85,16 +88,19 @@ sum(endsWith(colnames(wdbc.data), "_worst"))
 ```
 
 ### How many observations have benign or malignant diagnosis ?
+
 ```{r}
 table(wdbc$diagnosis)
 ```
  
 ### What is the mean of each of the numeric columns ?
+
 ```{r}
 round(colMeans(wdbc.data),2)
 ```
 
 ### What is the sd of each of the numeric columns ?
+
 ```{r}
 roundSD <- function(x){
   round(sd(x),2)
@@ -131,6 +137,7 @@ corrplot(M, diag = FALSE, method="color", order="FPC", tl.srt = 90, cl.offset = 
 From the corrplot, it is evident that there are many variables that are highly correlated with each other. 
 
 ## PCA
+
 Due to the number of variables in the model, we can try using a dimentionality reduction technique to unveil any patterns in the data. It also helps in visualizing a multi-dimentional dataset like this.
 
 The first step in doing a PCA, is to ask ourselves whether or not the data should be scaled to unit variance. That is, to bring all the numeric variables to the same scale. In other words, we are trying to determine whether we should use a correlation matrix or a covariance matrix in our calculations of eigen values and eigen vectors (aka principal components).
@@ -150,7 +157,10 @@ summary(wdbc.pr)
 
 Let's create a bi-plot to visualize this:
 ```{r}
+cex.before <- par("cex")
+par(cex = 0.7)
 biplot(wdbc.pr)
+par(cex = cex.before)
 ```
 
 From the above bi-plot of PC1 vs PC2, we can see that all these variables are trending in the same direction and most of them are highly correlated (More on this .. we can visualize this in a corrplot)
@@ -205,6 +215,7 @@ plot(cumsum(pve), xlab = "Principal Component",
 Scree-plots suggest that 80% of the variation in the numeric data is captured in the first 5 PCs.
 
 ## LDA
+
 As found in the PCA analysis, we can keep 5 PCs in the model. Our next task is to use the first 5 PCs to build a Linear discriminant function using the `lda()` function in R. 
 
 From the `wdbc.pr` object, we need to extract the first five PC's. To do this, let's first check the variables available for this object.
@@ -232,8 +243,10 @@ head(wdbc.pcst)
 
 Here, diagnosis == 1 represents malignant and diagnosis == 0 represents benign.
 
+## Cross Validation
 
-## Splitting the dataset into training/test data
+### Splitting the dataset into training/test data
+
 When creating the LDA model, we can split the data into training and test data. Using the training data we can build the LDA function. Next, we use the test data to make predictions. 
 
 ```{r}
@@ -299,7 +312,6 @@ Our predictions are contained in the `class` attribute.
 
 Next, compare the accuracy of these predictions with the original data.
 
-## Cross validation
 A simple way to validate the accuracy of our model in predicting diagnosis (M or B) is to compare the test data result to the observed data. Find the proportion of the errors in prediction and see whether our model is acceptable. 
 
 ```{r}
@@ -318,6 +330,9 @@ What is the sensitivity of this model ?
 What is the Specificity of this model ?
 
 > Note: The above table is termed as a confusion matrix. From a confusion matrix you can calculate some measures such as: classification accuracy, sensitivity and specificity.
+
+### 3-fold cross validation
+
 
 We can implement a cross-validation plan using the `vtreat` package's `kWayCrossValidation` function. 
 Syntax: kWayCrossValidation(nRows, nSplits, dframe, y)
@@ -360,6 +375,8 @@ for ( i in 1:k ) {
 
 ```
 
+### 10-fold cross validation
+
 Running a 10-fold cross validation:
 
 ```{r}
@@ -368,7 +385,7 @@ k <- 10
 nRows <- nrow(wdbc.pcst.df)
 splitPlan <- kWayCrossValidation(nRows, 10, NULL, NULL)
 
-# Run a 3-fold cross validation plan from splitPlan
+# Run a 10-fold cross validation plan from splitPlan
 
 for ( i in 1:k ) {
   split <- splitPlan[[i]]
@@ -383,7 +400,7 @@ for ( i in 1:k ) {
 
 An advanced way of validating the accuracy of our model is by using a k-fold cross-validation. 
 
-When we split the data into training and test data set, we are essentially doing 1 out of sample test. However, this process is a little fragile. The presence or absence of a single outlier can greatly affect our out-of-sample RMSE (not applicable in LDA). A better approach than a simple train/test split, using multiple test sets and averaging out of sample error - which gives us a more precise estimate of the true out of sample error. One of the most common approaches for multiple test sets is Cross Validation. 
+When we split the data into training and test data set, we are essentially doing 1 out of sample test. However, this process is a little fragile. A better approach than a simple train/test split, using multiple test sets and averaging out of sample error - which gives us a more precise estimate of the true out of sample error. One of the most common approaches for multiple test sets is Cross Validation. 
 
 ## Conclusion
 

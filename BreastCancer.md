@@ -17,8 +17,10 @@ Shravan Kuchkula
     -   [Bi-Plot](#bi-plot)
     -   [Scree plots](#scree-plots)
 -   [LDA](#lda)
--   [Splitting the dataset into training/test data](#splitting-the-dataset-into-trainingtest-data)
--   [Cross validation](#cross-validation)
+-   [Cross Validation](#cross-validation)
+    -   [Splitting the dataset into training/test data](#splitting-the-dataset-into-trainingtest-data)
+    -   [3-fold cross validation](#fold-cross-validation)
+    -   [10-fold cross validation](#fold-cross-validation-1)
 -   [Conclusion](#conclusion)
 
 Introduction
@@ -290,10 +292,16 @@ summary(wdbc.pr)
 Let's create a bi-plot to visualize this:
 
 ``` r
+cex.before <- par("cex")
+par(cex = 0.7)
 biplot(wdbc.pr)
 ```
 
 ![](BreastCancer_files/figure-markdown_github/unnamed-chunk-12-1.png)
+
+``` r
+par(cex = cex.before)
+```
 
 From the above bi-plot of PC1 vs PC2, we can see that all these variables are trending in the same direction and most of them are highly correlated (More on this .. we can visualize this in a corrplot)
 
@@ -420,8 +428,10 @@ head(wdbc.pcst)
 
 Here, diagnosis == 1 represents malignant and diagnosis == 0 represents benign.
 
-Splitting the dataset into training/test data
----------------------------------------------
+Cross Validation
+----------------
+
+### Splitting the dataset into training/test data
 
 When creating the LDA model, we can split the data into training and test data. Using the training data we can build the LDA function. Next, we use the test data to make predictions.
 
@@ -440,15 +450,15 @@ wdbc.pcst.test <- wdbc.pcst[rvec >= 0.75,]
 nrow(wdbc.pcst.train)
 ```
 
-    ## [1] 431
+    ## [1] 419
 
 ``` r
 nrow(wdbc.pcst.test)
 ```
 
-    ## [1] 138
+    ## [1] 150
 
-So, 431 observations are in training dataset and 138 observations are in the test dataset. We will use the training dataset to calculate the `linear discriminant function` by passing it to the `lda()` function of the `MASS` package.
+So, 419 observations are in training dataset and 150 observations are in the test dataset. We will use the training dataset to calculate the `linear discriminant function` by passing it to the `lda()` function of the `MASS` package.
 
 ``` r
 library(MASS)
@@ -473,20 +483,20 @@ wdbc.lda
     ## 
     ## Prior probabilities of groups:
     ##         0         1 
-    ## 0.6334107 0.3665893 
+    ## 0.6372315 0.3627685 
     ## 
     ## Group means:
-    ##         PC1        PC2        PC3        PC4         PC5
-    ## 0  2.243094 -0.3133285  0.1786345  0.1319619 -0.09898014
-    ## 1 -3.898717  0.6210776 -0.3507478 -0.2196505  0.25177802
+    ##         PC1        PC2        PC3        PC4        PC5
+    ## 0  2.158356 -0.3715593  0.1834672  0.1979268 -0.1664454
+    ## 1 -3.652319  0.6641208 -0.3777881 -0.3267553  0.2105670
     ## 
     ## Coefficients of linear discriminants:
     ##            LD1
-    ## PC1 -0.4515950
-    ## PC2  0.1556745
-    ## PC3 -0.1980461
-    ## PC4 -0.1901532
-    ## PC5  0.1697519
+    ## PC1 -0.4767508
+    ## PC2  0.1873273
+    ## PC3 -0.1902564
+    ## PC4 -0.2314241
+    ## PC5  0.1962748
 
 Let's use this to predict by passing the predict function's newdata as the testing dataset.
 
@@ -514,16 +524,14 @@ Our predictions are contained in the `class` attribute.
 (wdbc.lda.predict.class <- wdbc.lda.predict$class)
 ```
 
-    ##   [1] 1 1 1 1 1 1 0 1 1 0 0 1 0 1 0 1 1 0 0 0 0 0 0 0 0 0 0 0 1 0 0 1 0 1 1
-    ##  [36] 0 1 0 0 0 1 0 1 1 1 1 0 1 0 1 0 0 1 0 0 1 1 1 0 0 0 0 0 0 0 1 1 0 0 0
-    ##  [71] 0 0 1 0 0 0 0 1 0 0 0 1 0 0 1 1 1 0 0 1 0 1 0 0 0 0 0 1 0 0 0 0 1 1 1
-    ## [106] 0 1 1 0 1 0 0 1 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+    ##   [1] 1 1 1 1 1 1 1 0 1 0 1 0 1 1 1 0 0 0 1 0 1 0 1 0 1 0 0 0 1 0 1 1 0 0 1
+    ##  [36] 0 0 0 1 0 1 0 0 1 0 1 0 1 0 1 1 0 0 0 0 1 1 0 0 0 1 0 1 1 0 1 0 0 1 0
+    ##  [71] 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 0 0 1 0 0 0 0
+    ## [106] 1 1 1 0 1 0 1 0 0 0 0 0 1 0 0 0 0 0 0 1 0 0 1 0 0 1 0 1 0 0 0 0 0 0 0
+    ## [141] 0 0 0 0 0 0 0 0 0 0
     ## Levels: 0 1
 
 Next, compare the accuracy of these predictions with the original data.
-
-Cross validation
-----------------
 
 A simple way to validate the accuracy of our model in predicting diagnosis (M or B) is to compare the test data result to the observed data. Find the proportion of the errors in prediction and see whether our model is acceptable.
 
@@ -533,12 +541,12 @@ A simple way to validate the accuracy of our model in predicting diagnosis (M or
 
     ##                       
     ## wdbc.lda.predict.class  0  1
-    ##                      0 84  7
-    ##                      1  0 47
+    ##                      0 90 10
+    ##                      1  0 50
 
-So according to this output, the model predicted 84 times that the diagnosis is 0 (benign) when the actual observation was 0 (benign) and 7 times it predicted incorrectly. Similarly, the model predicted that the diagnosis is 1 (malignant) 47 times correctly and 0 predicted incorrectly.
+So according to this output, the model predicted 90 times that the diagnosis is 0 (benign) when the actual observation was 0 (benign) and 10 times it predicted incorrectly. Similarly, the model predicted that the diagnosis is 1 (malignant) 50 times correctly and 0 predicted incorrectly.
 
-The accuracy of this model in predicting benign tumors is 0.9230769 or 92.3076923% accurate. The accuracy of this model in predicting malignant tumors is 1 or 100% accurate.
+The accuracy of this model in predicting benign tumors is 0.9 or 90% accurate. The accuracy of this model in predicting malignant tumors is 1 or 100% accurate.
 
 What is the classification accuracy of this model ?
 
@@ -547,6 +555,8 @@ What is the sensitivity of this model ?
 What is the Specificity of this model ?
 
 > Note: The above table is termed as a confusion matrix. From a confusion matrix you can calculate some measures such as: classification accuracy, sensitivity and specificity.
+
+### 3-fold cross validation
 
 We can implement a cross-validation plan using the `vtreat` package's `kWayCrossValidation` function. Syntax: kWayCrossValidation(nRows, nSplits, dframe, y)
 
@@ -569,14 +579,14 @@ str(splitPlan)
 
     ## List of 3
     ##  $ :List of 2
-    ##   ..$ train: int [1:380] 4 6 8 9 10 11 14 15 16 17 ...
-    ##   ..$ app  : int [1:189] 78 138 297 133 327 57 485 40 272 366 ...
+    ##   ..$ train: int [1:380] 2 3 6 7 8 9 10 11 12 13 ...
+    ##   ..$ app  : int [1:189] 435 279 516 191 240 64 547 27 371 285 ...
     ##  $ :List of 2
-    ##   ..$ train: int [1:379] 1 2 3 4 5 7 9 10 11 12 ...
-    ##   ..$ app  : int [1:190] 235 155 453 212 541 309 557 455 273 433 ...
+    ##   ..$ train: int [1:379] 1 2 4 5 6 7 9 10 11 12 ...
+    ##   ..$ app  : int [1:190] 106 461 65 427 39 347 296 551 154 274 ...
     ##  $ :List of 2
-    ##   ..$ train: int [1:379] 1 2 3 5 6 7 8 12 13 14 ...
-    ##   ..$ app  : int [1:190] 430 446 329 426 454 100 139 508 208 281 ...
+    ##   ..$ train: int [1:379] 1 3 4 5 8 14 15 16 17 18 ...
+    ##   ..$ app  : int [1:190] 50 515 439 276 13 565 6 490 247 105 ...
     ##  - attr(*, "splitmethod")= chr "kwaycross"
 
 Here, k is the number of folds and `splitplan` is the cross validation plan
@@ -597,16 +607,18 @@ for ( i in 1:k ) {
 
     ##    
     ##       0   1
-    ##   0 116   9
+    ##   0 120   7
+    ##   1   0  62
+    ##    
+    ##       0   1
+    ##   0 114  12
     ##   1   0  64
     ##    
     ##       0   1
-    ##   0 115  10
-    ##   1   0  65
-    ##    
-    ##       0   1
-    ##   0 125   7
-    ##   1   1  57
+    ##   0 123   5
+    ##   1   0  62
+
+### 10-fold cross validation
 
 Running a 10-fold cross validation:
 
@@ -616,7 +628,7 @@ k <- 10
 nRows <- nrow(wdbc.pcst.df)
 splitPlan <- kWayCrossValidation(nRows, 10, NULL, NULL)
 
-# Run a 3-fold cross validation plan from splitPlan
+# Run a 10-fold cross validation plan from splitPlan
 
 for ( i in 1:k ) {
   split <- splitPlan[[i]]
@@ -630,48 +642,48 @@ for ( i in 1:k ) {
 
     ##    
     ##      0  1
-    ##   0 39  2
-    ##   1  0 15
+    ##   0 31  4
+    ##   1  0 21
     ##    
     ##      0  1
-    ##   0 37  1
-    ##   1  0 19
+    ##   0 31  3
+    ##   1  0 23
+    ##    
+    ##      0  1
+    ##   0 39  2
+    ##   1  0 16
+    ##    
+    ##      0  1
+    ##   0 37  2
+    ##   1  0 18
+    ##    
+    ##      0  1
+    ##   0 33  1
+    ##   1  0 23
+    ##    
+    ##      0  1
+    ##   0 36  2
+    ##   1  1 18
+    ##    
+    ##      0  1
+    ##   0 36  4
+    ##   1  0 17
+    ##    
+    ##      0  1
+    ##   0 38  2
+    ##   1  0 17
+    ##    
+    ##      0  1
+    ##   0 40  2
+    ##   1  0 15
     ##    
     ##      0  1
     ##   0 35  6
     ##   1  0 16
-    ##    
-    ##      0  1
-    ##   0 31  1
-    ##   1  0 25
-    ##    
-    ##      0  1
-    ##   0 30  3
-    ##   1  0 24
-    ##    
-    ##      0  1
-    ##   0 39  2
-    ##   1  0 16
-    ##    
-    ##      0  1
-    ##   0 33  3
-    ##   1  1 20
-    ##    
-    ##      0  1
-    ##   0 36  1
-    ##   1  0 20
-    ##    
-    ##      0  1
-    ##   0 41  4
-    ##   1  0 12
-    ##    
-    ##      0  1
-    ##   0 35  4
-    ##   1  0 18
 
 An advanced way of validating the accuracy of our model is by using a k-fold cross-validation.
 
-When we split the data into training and test data set, we are essentially doing 1 out of sample test. However, this process is a little fragile. The presence or absence of a single outlier can greatly affect our out-of-sample RMSE (not applicable in LDA). A better approach than a simple train/test split, using multiple test sets and averaging out of sample error - which gives us a more precise estimate of the true out of sample error. One of the most common approaches for multiple test sets is Cross Validation.
+When we split the data into training and test data set, we are essentially doing 1 out of sample test. However, this process is a little fragile. A better approach than a simple train/test split, using multiple test sets and averaging out of sample error - which gives us a more precise estimate of the true out of sample error. One of the most common approaches for multiple test sets is Cross Validation.
 
 Conclusion
 ----------
