@@ -12,6 +12,7 @@ Shravan Kuchkula
     -   [How many observations have benign or malignant diagnosis ?](#how-many-observations-have-benign-or-malignant-diagnosis)
     -   [What is the mean of each of the numeric columns ?](#what-is-the-mean-of-each-of-the-numeric-columns)
     -   [What is the sd of each of the numeric columns ?](#what-is-the-sd-of-each-of-the-numeric-columns)
+    -   [How are the variables related to each other ?](#how-are-the-variables-related-to-each-other)
 -   [PCA](#pca)
     -   [Bi-Plot](#bi-plot)
     -   [Scree plots](#scree-plots)
@@ -42,7 +43,8 @@ source('libraries.R')
 Using read.csv we can download the dataset as shown:
 
 ``` r
-url <- "http://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data"
+#url <- "http://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data"
+#download.file(url, 'wdbc.csv')
 
 # use read_csv to the read into a dataframe
 # columnNames are missing in the above link, so we need to give them manually.
@@ -55,7 +57,7 @@ columnNames <- c("id","diagnosis","radius_mean","texture_mean","perimeter_mean",
                  "area_worst","smoothness_worst","compactness_worst","concavity_worst",
                  "concave_points_worst","symmetry_worst","fractal_dimension_worst")
 #wdbc <- read_csv(url, col_names = columnNames, col_types = NULL)
-wdbc <- read.csv(url, header = FALSE, col.names = columnNames)
+wdbc <- read.csv('wdbc.csv', header = FALSE, col.names = columnNames)
 ```
 
 Let's take a peak
@@ -160,65 +162,97 @@ table(wdbc$diagnosis)
 ### What is the mean of each of the numeric columns ?
 
 ``` r
-colMeans(wdbc.data)
+round(colMeans(wdbc.data),2)
 ```
 
     ##             radius_mean            texture_mean          perimeter_mean 
-    ##            1.412729e+01            1.928965e+01            9.196903e+01 
+    ##                   14.13                   19.29                   91.97 
     ##               area_mean         smoothness_mean        compactness_mean 
-    ##            6.548891e+02            9.636028e-02            1.043410e-01 
+    ##                  654.89                    0.10                    0.10 
     ##          concavity_mean     concave_points_mean           symmetry_mean 
-    ##            8.879932e-02            4.891915e-02            1.811619e-01 
+    ##                    0.09                    0.05                    0.18 
     ##  fractal_dimension_mean               radius_se              texture_se 
-    ##            6.279761e-02            4.051721e-01            1.216853e+00 
+    ##                    0.06                    0.41                    1.22 
     ##            perimeter_se                 area_se           smoothness_se 
-    ##            2.866059e+00            4.033708e+01            7.040979e-03 
+    ##                    2.87                   40.34                    0.01 
     ##          compactness_se            concavity_se       concave_points_se 
-    ##            2.547814e-02            3.189372e-02            1.179614e-02 
+    ##                    0.03                    0.03                    0.01 
     ##             symmetry_se    fractal_dimension_se            radius_worst 
-    ##            2.054230e-02            3.794904e-03            1.626919e+01 
+    ##                    0.02                    0.00                   16.27 
     ##           texture_worst         perimeter_worst              area_worst 
-    ##            2.567722e+01            1.072612e+02            8.805831e+02 
+    ##                   25.68                  107.26                  880.58 
     ##        smoothness_worst       compactness_worst         concavity_worst 
-    ##            1.323686e-01            2.542650e-01            2.721885e-01 
+    ##                    0.13                    0.25                    0.27 
     ##    concave_points_worst          symmetry_worst fractal_dimension_worst 
-    ##            1.146062e-01            2.900756e-01            8.394582e-02
+    ##                    0.11                    0.29                    0.08
 
 ### What is the sd of each of the numeric columns ?
 
 ``` r
-apply(wdbc.data, 2, sd)
+roundSD <- function(x){
+  round(sd(x),2)
+}
+apply(wdbc.data, 2, roundSD)
 ```
 
     ##             radius_mean            texture_mean          perimeter_mean 
-    ##            3.524049e+00            4.301036e+00            2.429898e+01 
+    ##                    3.52                    4.30                   24.30 
     ##               area_mean         smoothness_mean        compactness_mean 
-    ##            3.519141e+02            1.406413e-02            5.281276e-02 
+    ##                  351.91                    0.01                    0.05 
     ##          concavity_mean     concave_points_mean           symmetry_mean 
-    ##            7.971981e-02            3.880284e-02            2.741428e-02 
+    ##                    0.08                    0.04                    0.03 
     ##  fractal_dimension_mean               radius_se              texture_se 
-    ##            7.060363e-03            2.773127e-01            5.516484e-01 
+    ##                    0.01                    0.28                    0.55 
     ##            perimeter_se                 area_se           smoothness_se 
-    ##            2.021855e+00            4.549101e+01            3.002518e-03 
+    ##                    2.02                   45.49                    0.00 
     ##          compactness_se            concavity_se       concave_points_se 
-    ##            1.790818e-02            3.018606e-02            6.170285e-03 
+    ##                    0.02                    0.03                    0.01 
     ##             symmetry_se    fractal_dimension_se            radius_worst 
-    ##            8.266372e-03            2.646071e-03            4.833242e+00 
+    ##                    0.01                    0.00                    4.83 
     ##           texture_worst         perimeter_worst              area_worst 
-    ##            6.146258e+00            3.360254e+01            5.693570e+02 
+    ##                    6.15                   33.60                  569.36 
     ##        smoothness_worst       compactness_worst         concavity_worst 
-    ##            2.283243e-02            1.573365e-01            2.086243e-01 
+    ##                    0.02                    0.16                    0.21 
     ##    concave_points_worst          symmetry_worst fractal_dimension_worst 
-    ##            6.573234e-02            6.186747e-02            1.806127e-02
+    ##                    0.07                    0.06                    0.02
+
+### How are the variables related to each other ?
+
+``` r
+corMatrix <- wdbc[,c(3:32)]
+
+
+# Rename the colnames
+cNames <- c("rad_m","txt_m","per_m",
+                 "are_m","smt_m","cmp_m","con_m",
+                 "ccp_m","sym_m","frd_m",
+                 "rad_se","txt_se","per_se","are_se","smt_se",
+                 "cmp_se","con_se","ccp_se","sym_se",
+                 "frd_se","rad_w","txt_w","per_w",
+                 "are_w","smt_w","cmp_w","con_w",
+                 "ccp_w","sym_w","frd_w")
+
+colnames(corMatrix) <- cNames
+
+# Create the correlation matrix
+M <- round(cor(corMatrix), 2)
+
+# Create corrplot
+corrplot(M, diag = FALSE, method="color", order="FPC", tl.srt = 90, cl.offset = 0.5)
+```
+
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-10-1.png)
+
+From the corrplot, it is evident that there are many variables that are highly correlated with each other.
 
 PCA
 ---
 
 Due to the number of variables in the model, we can try using a dimentionality reduction technique to unveil any patterns in the data. It also helps in visualizing a multi-dimentional dataset like this.
 
-The first step in doing a PCA, is to ask ourselves whether or not the data should be scaled to unit variance. That is, to bring all the numeric variables to the same scale.
+The first step in doing a PCA, is to ask ourselves whether or not the data should be scaled to unit variance. That is, to bring all the numeric variables to the same scale. In other words, we are trying to determine whether we should use a correlation matrix or a covariance matrix in our calculations of eigen values and eigen vectors (aka principal components).
 
-Based on the output from `mean` and `sd`, it does appear that some variables have larger variance, e.g. symmetry\_se. Hence we should use scaling. (will get this later and prove why we need to scale)
+Based on the output from `mean` and `sd`, it does appear that some variables have larger variance, e.g. area\_worst. Hence we should use scaling. (will get this later and prove why we need to scale)
 
 Running PCA:
 
@@ -259,7 +293,7 @@ Let's create a bi-plot to visualize this:
 biplot(wdbc.pr)
 ```
 
-![](BreastCancer_files/figure-markdown_github/unnamed-chunk-11-1.png)
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-12-1.png)
 
 From the above bi-plot of PC1 vs PC2, we can see that all these variables are trending in the same direction and most of them are highly correlated (More on this .. we can visualize this in a corrplot)
 
@@ -271,7 +305,7 @@ plot(wdbc.pr$x[, c(1, 2)], col = (diagnosis + 1),
      xlab = "PC1", ylab = "PC2")
 ```
 
-![](BreastCancer_files/figure-markdown_github/unnamed-chunk-12-1.png)
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-13-1.png)
 
 There is a clear seperation of diagnosis (M or B) that is evident in the PC1 vs PC2 plot.
 
@@ -283,7 +317,7 @@ plot(wdbc.pr$x[, c(1,3)], col = (diagnosis + 1),
      xlab = "PC1", ylab = "PC3")
 ```
 
-![](BreastCancer_files/figure-markdown_github/unnamed-chunk-13-1.png)
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-14-1.png)
 
 Because principal component 2 explains more variance in the original data than principal component 3, you can see that the first plot has a cleaner cut separating the two subgroups.
 
@@ -311,7 +345,7 @@ plot(pve, xlab = "Principal Component",
      ylim = c(0, 1), type = "b")
 ```
 
-![](BreastCancer_files/figure-markdown_github/unnamed-chunk-15-1.png)
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-16-1.png)
 
 ``` r
 # Plot cumulative proportion of variance explained
@@ -320,7 +354,7 @@ plot(cumsum(pve), xlab = "Principal Component",
      ylim = c(0, 1), type = "b")
 ```
 
-![](BreastCancer_files/figure-markdown_github/unnamed-chunk-15-2.png)
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-16-2.png)
 
 Scree-plots suggest that 80% of the variation in the numeric data is captured in the first 5 PCs.
 
@@ -406,15 +440,15 @@ wdbc.pcst.test <- wdbc.pcst[rvec >= 0.75,]
 nrow(wdbc.pcst.train)
 ```
 
-    ## [1] 411
+    ## [1] 431
 
 ``` r
 nrow(wdbc.pcst.test)
 ```
 
-    ## [1] 158
+    ## [1] 138
 
-So, 433 observations are in training dataset and 136 observations are in the test dataset. We will use the training dataset to calculate the `linear discriminant function` by passing it to the `lda()` function of the `MASS` package.
+So, 431 observations are in training dataset and 138 observations are in the test dataset. We will use the training dataset to calculate the `linear discriminant function` by passing it to the `lda()` function of the `MASS` package.
 
 ``` r
 library(MASS)
@@ -439,20 +473,20 @@ wdbc.lda
     ## 
     ## Prior probabilities of groups:
     ##         0         1 
-    ## 0.6666667 0.3333333 
+    ## 0.6334107 0.3665893 
     ## 
     ## Group means:
-    ##         PC1        PC2        PC3        PC4        PC5
-    ## 0  2.197658 -0.2174524  0.1430652  0.1122101 -0.1678296
-    ## 1 -3.497758  0.4752905 -0.3617218 -0.2070868  0.1681842
+    ##         PC1        PC2        PC3        PC4         PC5
+    ## 0  2.243094 -0.3133285  0.1786345  0.1319619 -0.09898014
+    ## 1 -3.898717  0.6210776 -0.3507478 -0.2196505  0.25177802
     ## 
     ## Coefficients of linear discriminants:
     ##            LD1
-    ## PC1 -0.4941127
-    ## PC2  0.1679643
-    ## PC3 -0.1783100
-    ## PC4 -0.1910751
-    ## PC5  0.2062614
+    ## PC1 -0.4515950
+    ## PC2  0.1556745
+    ## PC3 -0.1980461
+    ## PC4 -0.1901532
+    ## PC5  0.1697519
 
 Let's use this to predict by passing the predict function's newdata as the testing dataset.
 
@@ -480,11 +514,10 @@ Our predictions are contained in the `class` attribute.
 (wdbc.lda.predict.class <- wdbc.lda.predict$class)
 ```
 
-    ##   [1] 1 1 1 1 1 0 1 1 1 1 1 0 1 1 1 1 1 0 0 1 0 1 0 0 1 0 1 0 0 0 0 0 1 1 1
-    ##  [36] 0 0 1 0 1 0 0 0 0 0 1 1 0 1 0 0 1 1 0 1 0 0 0 1 1 1 1 0 1 1 0 0 0 0 0
-    ##  [71] 1 0 1 1 0 1 0 0 1 1 0 1 0 1 1 1 0 0 0 1 0 0 0 1 1 1 0 0 0 0 1 0 0 0 0
-    ## [106] 1 1 0 1 0 1 0 0 1 0 0 0 1 0 0 0 1 0 1 0 1 1 1 0 1 0 0 0 0 0 0 0 0 0 1
-    ## [141] 0 0 0 1 0 0 1 0 0 1 0 0 0 0 0 1 1 1
+    ##   [1] 1 1 1 1 1 1 0 1 1 0 0 1 0 1 0 1 1 0 0 0 0 0 0 0 0 0 0 0 1 0 0 1 0 1 1
+    ##  [36] 0 1 0 0 0 1 0 1 1 1 1 0 1 0 1 0 0 1 0 0 1 1 1 0 0 0 0 0 0 0 1 1 0 0 0
+    ##  [71] 0 0 1 0 0 0 0 1 0 0 0 1 0 0 1 1 1 0 0 1 0 1 0 0 0 0 0 1 0 0 0 0 1 1 1
+    ## [106] 0 1 1 0 1 0 0 1 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
     ## Levels: 0 1
 
 Next, compare the accuracy of these predictions with the original data.
@@ -495,19 +528,150 @@ Cross validation
 A simple way to validate the accuracy of our model in predicting diagnosis (M or B) is to compare the test data result to the observed data. Find the proportion of the errors in prediction and see whether our model is acceptable.
 
 ``` r
-table(wdbc.lda.predict.class, wdbc.pcst.test.df$diagnosis)
+(confusionMat <- table(wdbc.lda.predict.class, wdbc.pcst.test.df$diagnosis))
 ```
 
     ##                       
     ## wdbc.lda.predict.class  0  1
-    ##                      0 83  5
-    ##                      1  0 70
+    ##                      0 84  7
+    ##                      1  0 47
 
-So according to this output, the model predicted 87 times that the diagnosis is 0 (benign) when the actual observation was 0 (benign) and 10 times it predicted incorrectly. Similarly, the model predicted that the diagnosis is 1 (malignant) and once predicted incorrectly.
+So according to this output, the model predicted 84 times that the diagnosis is 0 (benign) when the actual observation was 0 (benign) and 7 times it predicted incorrectly. Similarly, the model predicted that the diagnosis is 1 (malignant) 47 times correctly and 0 predicted incorrectly.
 
-The accuracy of this model in predicting benign tumors is 87/97 = 0.8969 or 89.69% accurate. The accuracy of this model in predicting malignant tumors is 38/39 = 0.9743 or 97.43% accurate.
+The accuracy of this model in predicting benign tumors is 0.9230769 or 92.3076923% accurate. The accuracy of this model in predicting malignant tumors is 1 or 100% accurate.
+
+What is the classification accuracy of this model ?
+
+What is the sensitivity of this model ?
+
+What is the Specificity of this model ?
+
+> Note: The above table is termed as a confusion matrix. From a confusion matrix you can calculate some measures such as: classification accuracy, sensitivity and specificity.
+
+We can implement a cross-validation plan using the `vtreat` package's `kWayCrossValidation` function. Syntax: kWayCrossValidation(nRows, nSplits, dframe, y)
+
+nRows - number of rows in the training data nSplits - number of folds (partitions) in the cross-validation. E.g, 3 for 3-way CV remaining 2 arguments not needed.
+
+The function returns indicies for training and test data for each fold. Use the data with the training indicies to fit the model and then make predictions using the test indicies. If the estimated model performance looks good, then use all the data to fit a final model. You can't evaluate this final model, becuase you don't have data to evaluate it with. Cross Validation only tests the modeling process, while the test/train split tests the final model.
+
+``` r
+library(vtreat)
+
+# convert wdbc.pcst to a dataframe
+wdbc.pcst.df <- as.data.frame(wdbc.pcst)
+
+nRows <- nrow(wdbc.pcst.df)
+splitPlan <- kWayCrossValidation(nRows, 3, NULL, NULL)
+
+# examine the split plan
+str(splitPlan)
+```
+
+    ## List of 3
+    ##  $ :List of 2
+    ##   ..$ train: int [1:380] 4 6 8 9 10 11 14 15 16 17 ...
+    ##   ..$ app  : int [1:189] 78 138 297 133 327 57 485 40 272 366 ...
+    ##  $ :List of 2
+    ##   ..$ train: int [1:379] 1 2 3 4 5 7 9 10 11 12 ...
+    ##   ..$ app  : int [1:190] 235 155 453 212 541 309 557 455 273 433 ...
+    ##  $ :List of 2
+    ##   ..$ train: int [1:379] 1 2 3 5 6 7 8 12 13 14 ...
+    ##   ..$ app  : int [1:190] 430 446 329 426 454 100 139 508 208 281 ...
+    ##  - attr(*, "splitmethod")= chr "kwaycross"
+
+Here, k is the number of folds and `splitplan` is the cross validation plan
+
+``` r
+# Run a 3-fold cross validation plan from splitPlan
+k <- 3
+
+for ( i in 1:k ) {
+  split <- splitPlan[[i]]
+  model <- lda(diagnosis ~ PC1 + PC2 + PC3 + PC4 + PC5, data = wdbc.pcst.df[split$train,])
+  model.pred.cv <- predict(model, newdata = wdbc.pcst.df[split$app,])
+  
+  confMat <- table(model.pred.cv$class, wdbc.pcst.df$diagnosis[split$app])
+  print(confMat)
+}
+```
+
+    ##    
+    ##       0   1
+    ##   0 116   9
+    ##   1   0  64
+    ##    
+    ##       0   1
+    ##   0 115  10
+    ##   1   0  65
+    ##    
+    ##       0   1
+    ##   0 125   7
+    ##   1   1  57
+
+Running a 10-fold cross validation:
+
+``` r
+# Run a 10-fold cross validation plan from splitPlan
+k <- 10
+nRows <- nrow(wdbc.pcst.df)
+splitPlan <- kWayCrossValidation(nRows, 10, NULL, NULL)
+
+# Run a 3-fold cross validation plan from splitPlan
+
+for ( i in 1:k ) {
+  split <- splitPlan[[i]]
+  model <- lda(diagnosis ~ PC1 + PC2 + PC3 + PC4 + PC5, data = wdbc.pcst.df[split$train,])
+  model.pred.cv <- predict(model, newdata = wdbc.pcst.df[split$app,])
+  
+  confMat <- table(model.pred.cv$class, wdbc.pcst.df$diagnosis[split$app])
+  print(confMat)
+}
+```
+
+    ##    
+    ##      0  1
+    ##   0 39  2
+    ##   1  0 15
+    ##    
+    ##      0  1
+    ##   0 37  1
+    ##   1  0 19
+    ##    
+    ##      0  1
+    ##   0 35  6
+    ##   1  0 16
+    ##    
+    ##      0  1
+    ##   0 31  1
+    ##   1  0 25
+    ##    
+    ##      0  1
+    ##   0 30  3
+    ##   1  0 24
+    ##    
+    ##      0  1
+    ##   0 39  2
+    ##   1  0 16
+    ##    
+    ##      0  1
+    ##   0 33  3
+    ##   1  1 20
+    ##    
+    ##      0  1
+    ##   0 36  1
+    ##   1  0 20
+    ##    
+    ##      0  1
+    ##   0 41  4
+    ##   1  0 12
+    ##    
+    ##      0  1
+    ##   0 35  4
+    ##   1  0 18
 
 An advanced way of validating the accuracy of our model is by using a k-fold cross-validation.
+
+When we split the data into training and test data set, we are essentially doing 1 out of sample test. However, this process is a little fragile. The presence or absence of a single outlier can greatly affect our out-of-sample RMSE (not applicable in LDA). A better approach than a simple train/test split, using multiple test sets and averaging out of sample error - which gives us a more precise estimate of the true out of sample error. One of the most common approaches for multiple test sets is Cross Validation.
 
 Conclusion
 ----------
