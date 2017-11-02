@@ -144,7 +144,59 @@ The first step in doing a PCA, is to ask ourselves whether or not the data shoul
 
 Based on the output from `mean` and `sd`, it does appear that some variables have larger variance, e.g. area_worst. Hence we should use scaling. (will get this later and prove why we need to scale)
 
-Running PCA:
+### Running a PCA using covariance matrix:
+
+```{r}
+wdbc.pcov <- princomp(wdbc.data, scores = TRUE)
+summary(wdbc.pcov)
+```
+
+Get the eigen values:
+
+```{r}
+# Eigen values using covariance matrix
+round(wdbc.pcov$sdev ^2,4)
+```
+
+
+Bi-plot using covariance matrix:
+```{r warning=FALSE}
+cex.before <- par("cex")
+par(cex = 0.7)
+biplot(wdbc.pcov)
+par(cex = cex.before)
+```
+
+Scree plots can be useful in deciding how many PC's we should keep in the model. Let's create the scree-plots in R. As there is no R function to create a scree-plot, we need to prepare the data for the plot.
+
+```{r}
+# Set up 1 x 2 plotting grid
+par(mfrow = c(1, 2))
+
+# Calculate variability of each component
+pr.cvar <- wdbc.pcov$sdev ^ 2
+
+# Variance explained by each principal component: pve
+pve_cov <- pr.cvar/sum(pr.cvar)
+```
+
+Create a plot of variance explained for each principal component.
+
+Scree plot using covariance matrix:
+```{r}
+# Plot variance explained for each principal component
+plot(pve_cov, xlab = "Principal Component", 
+     ylab = "Proportion of Variance Explained", 
+     ylim = c(0, 1), type = "b")
+
+# Plot cumulative proportion of variance explained
+plot(cumsum(pve_cov), xlab = "Principal Component", 
+     ylab = "Cumulative Proportion of Variance Explained", 
+     ylim = c(0, 1), type = "b")
+```
+
+
+Running PCA using correlation matrix:
 
 ```{r}
 wdbc.pr <- prcomp(wdbc.data, scale = TRUE, center = TRUE)
@@ -243,7 +295,8 @@ head(wdbc.pcst)
 
 Here, diagnosis == 1 represents malignant and diagnosis == 0 represents benign.
 
-## Cross Validation
+## Model Validation
+To evaluate the effectiveness of our model in predicting the diagnosis of breast cancer, we can split the original data set into training and test data. Using the training data, we will build the model and predict using the test data. We will then compare the predictions with the original data to check the accuracy of our predictions. We will use three approaches to split and validate the data. In the first approach, we use 75% of the data as our training dataset and 25% as our test dataset. In the second approach, we use 3-fold cross validation and in the third approach we extend that to a 10-fold cross validation. 
 
 ### Splitting the dataset into training/test data
 

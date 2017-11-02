@@ -14,10 +14,11 @@ Shravan Kuchkula
     -   [What is the sd of each of the numeric columns ?](#what-is-the-sd-of-each-of-the-numeric-columns)
     -   [How are the variables related to each other ?](#how-are-the-variables-related-to-each-other)
 -   [PCA](#pca)
+    -   [Running a PCA using covariance matrix:](#running-a-pca-using-covariance-matrix)
     -   [Bi-Plot](#bi-plot)
     -   [Scree plots](#scree-plots)
 -   [LDA](#lda)
--   [Cross Validation](#cross-validation)
+-   [Model Validation](#model-validation)
     -   [Splitting the dataset into training/test data](#splitting-the-dataset-into-trainingtest-data)
     -   [3-fold cross validation](#fold-cross-validation)
     -   [10-fold cross validation](#fold-cross-validation-1)
@@ -256,7 +257,115 @@ The first step in doing a PCA, is to ask ourselves whether or not the data shoul
 
 Based on the output from `mean` and `sd`, it does appear that some variables have larger variance, e.g. area\_worst. Hence we should use scaling. (will get this later and prove why we need to scale)
 
-Running PCA:
+### Running a PCA using covariance matrix:
+
+``` r
+wdbc.pcov <- princomp(wdbc.data, scores = TRUE)
+summary(wdbc.pcov)
+```
+
+    ## Importance of components:
+    ##                             Comp.1      Comp.2       Comp.3      Comp.4
+    ## Standard deviation     665.5844581 85.42395908 26.506542133 7.385979582
+    ## Proportion of Variance   0.9820447  0.01617649  0.001557511 0.000120932
+    ## Cumulative Proportion    0.9820447  0.99822116  0.999778672 0.999899604
+    ##                              Comp.5       Comp.6       Comp.7       Comp.8
+    ## Standard deviation     6.310302e+00 1.731851e+00 1.346157e+00 6.089449e-01
+    ## Proportion of Variance 8.827245e-05 6.648840e-06 4.017137e-06 8.220172e-07
+    ## Cumulative Proportion  9.999879e-01 9.999945e-01 9.999985e-01 9.999994e-01
+    ##                              Comp.9      Comp.10      Comp.11      Comp.12
+    ## Standard deviation     3.940054e-01 2.896782e-01 1.776328e-01 8.651121e-02
+    ## Proportion of Variance 3.441353e-07 1.860187e-07 6.994732e-08 1.659089e-08
+    ## Cumulative Proportion  9.999997e-01 9.999999e-01 1.000000e+00 1.000000e+00
+    ##                             Comp.13      Comp.14      Comp.15      Comp.16
+    ## Standard deviation     5.617918e-02 4.645111e-02 3.638966e-02 2.528130e-02
+    ## Proportion of Variance 6.996416e-09 4.783183e-09 2.935492e-09 1.416849e-09
+    ## Cumulative Proportion  1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00
+    ##                             Comp.17      Comp.18      Comp.19      Comp.20
+    ## Standard deviation     1.934488e-02 1.532176e-02 1.357421e-02 1.280201e-02
+    ## Proportion of Variance 8.295777e-10 5.204059e-10 4.084640e-10 3.633134e-10
+    ## Cumulative Proportion  1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00
+    ##                             Comp.21      Comp.22     Comp.23      Comp.24
+    ## Standard deviation     8.830228e-03 7.583529e-03 5.90389e-03 5.324037e-03
+    ## Proportion of Variance 1.728497e-10 1.274875e-10 7.72683e-11 6.283577e-11
+    ## Cumulative Proportion  1.000000e+00 1.000000e+00 1.00000e+00 1.000000e+00
+    ##                             Comp.25      Comp.26      Comp.27      Comp.28
+    ## Standard deviation     4.014722e-03 3.531047e-03 1.916772e-03 1.686090e-03
+    ## Proportion of Variance 3.573023e-11 2.763960e-11 8.144523e-12 6.302115e-12
+    ## Cumulative Proportion  1.000000e+00 1.000000e+00 1.000000e+00 1.000000e+00
+    ##                             Comp.29      Comp.30
+    ## Standard deviation     1.414706e-03 8.371162e-04
+    ## Proportion of Variance 4.436669e-12 1.553447e-12
+    ## Cumulative Proportion  1.000000e+00 1.000000e+00
+
+Get the eigen values:
+
+``` r
+# Eigen values using covariance matrix
+round(wdbc.pcov$sdev ^2,4)
+```
+
+    ##      Comp.1      Comp.2      Comp.3      Comp.4      Comp.5      Comp.6 
+    ## 443002.6709   7297.2528    702.5968     54.5527     39.8199      2.9993 
+    ##      Comp.7      Comp.8      Comp.9     Comp.10     Comp.11     Comp.12 
+    ##      1.8121      0.3708      0.1552      0.0839      0.0316      0.0075 
+    ##     Comp.13     Comp.14     Comp.15     Comp.16     Comp.17     Comp.18 
+    ##      0.0032      0.0022      0.0013      0.0006      0.0004      0.0002 
+    ##     Comp.19     Comp.20     Comp.21     Comp.22     Comp.23     Comp.24 
+    ##      0.0002      0.0002      0.0001      0.0001      0.0000      0.0000 
+    ##     Comp.25     Comp.26     Comp.27     Comp.28     Comp.29     Comp.30 
+    ##      0.0000      0.0000      0.0000      0.0000      0.0000      0.0000
+
+Bi-plot using covariance matrix:
+
+``` r
+cex.before <- par("cex")
+par(cex = 0.7)
+biplot(wdbc.pcov)
+```
+
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-13-1.png)
+
+``` r
+par(cex = cex.before)
+```
+
+Scree plots can be useful in deciding how many PC's we should keep in the model. Let's create the scree-plots in R. As there is no R function to create a scree-plot, we need to prepare the data for the plot.
+
+``` r
+# Set up 1 x 2 plotting grid
+par(mfrow = c(1, 2))
+
+# Calculate variability of each component
+pr.cvar <- wdbc.pcov$sdev ^ 2
+
+# Variance explained by each principal component: pve
+pve_cov <- pr.cvar/sum(pr.cvar)
+```
+
+Create a plot of variance explained for each principal component.
+
+Scree plot using covariance matrix:
+
+``` r
+# Plot variance explained for each principal component
+plot(pve_cov, xlab = "Principal Component", 
+     ylab = "Proportion of Variance Explained", 
+     ylim = c(0, 1), type = "b")
+```
+
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-15-1.png)
+
+``` r
+# Plot cumulative proportion of variance explained
+plot(cumsum(pve_cov), xlab = "Principal Component", 
+     ylab = "Cumulative Proportion of Variance Explained", 
+     ylim = c(0, 1), type = "b")
+```
+
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-15-2.png)
+
+Running PCA using correlation matrix:
 
 ``` r
 wdbc.pr <- prcomp(wdbc.data, scale = TRUE, center = TRUE)
@@ -297,7 +406,7 @@ par(cex = 0.7)
 biplot(wdbc.pr)
 ```
 
-![](BreastCancer_files/figure-markdown_github/unnamed-chunk-12-1.png)
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-17-1.png)
 
 ``` r
 par(cex = cex.before)
@@ -313,7 +422,7 @@ plot(wdbc.pr$x[, c(1, 2)], col = (diagnosis + 1),
      xlab = "PC1", ylab = "PC2")
 ```
 
-![](BreastCancer_files/figure-markdown_github/unnamed-chunk-13-1.png)
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-18-1.png)
 
 There is a clear seperation of diagnosis (M or B) that is evident in the PC1 vs PC2 plot.
 
@@ -325,7 +434,7 @@ plot(wdbc.pr$x[, c(1,3)], col = (diagnosis + 1),
      xlab = "PC1", ylab = "PC3")
 ```
 
-![](BreastCancer_files/figure-markdown_github/unnamed-chunk-14-1.png)
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-19-1.png)
 
 Because principal component 2 explains more variance in the original data than principal component 3, you can see that the first plot has a cleaner cut separating the two subgroups.
 
@@ -353,7 +462,7 @@ plot(pve, xlab = "Principal Component",
      ylim = c(0, 1), type = "b")
 ```
 
-![](BreastCancer_files/figure-markdown_github/unnamed-chunk-16-1.png)
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-21-1.png)
 
 ``` r
 # Plot cumulative proportion of variance explained
@@ -362,7 +471,7 @@ plot(cumsum(pve), xlab = "Principal Component",
      ylim = c(0, 1), type = "b")
 ```
 
-![](BreastCancer_files/figure-markdown_github/unnamed-chunk-16-2.png)
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-21-2.png)
 
 Scree-plots suggest that 80% of the variation in the numeric data is captured in the first 5 PCs.
 
@@ -428,8 +537,10 @@ head(wdbc.pcst)
 
 Here, diagnosis == 1 represents malignant and diagnosis == 0 represents benign.
 
-Cross Validation
+Model Validation
 ----------------
+
+To evaluate the effectiveness of our model in predicting the diagnosis of breast cancer, we can split the original data set into training and test data. Using the training data, we will build the model and predict using the test data. We will then compare the predictions with the original data to check the accuracy of our predictions. We will use three approaches to split and validate the data. In the first approach, we use 75% of the data as our training dataset and 25% as our test dataset. In the second approach, we use 3-fold cross validation and in the third approach we extend that to a 10-fold cross validation.
 
 ### Splitting the dataset into training/test data
 
@@ -450,15 +561,15 @@ wdbc.pcst.test <- wdbc.pcst[rvec >= 0.75,]
 nrow(wdbc.pcst.train)
 ```
 
-    ## [1] 419
+    ## [1] 422
 
 ``` r
 nrow(wdbc.pcst.test)
 ```
 
-    ## [1] 150
+    ## [1] 147
 
-So, 419 observations are in training dataset and 150 observations are in the test dataset. We will use the training dataset to calculate the `linear discriminant function` by passing it to the `lda()` function of the `MASS` package.
+So, 422 observations are in training dataset and 147 observations are in the test dataset. We will use the training dataset to calculate the `linear discriminant function` by passing it to the `lda()` function of the `MASS` package.
 
 ``` r
 library(MASS)
@@ -483,20 +594,20 @@ wdbc.lda
     ## 
     ## Prior probabilities of groups:
     ##         0         1 
-    ## 0.6372315 0.3627685 
+    ## 0.6113744 0.3886256 
     ## 
     ## Group means:
-    ##         PC1        PC2        PC3        PC4        PC5
-    ## 0  2.158356 -0.3715593  0.1834672  0.1979268 -0.1664454
-    ## 1 -3.652319  0.6641208 -0.3777881 -0.3267553  0.2105670
+    ##         PC1        PC2        PC3         PC4         PC5
+    ## 0  2.267949 -0.2229657  0.2600170  0.07943201 -0.08497233
+    ## 1 -3.531331  0.5190802 -0.5630661 -0.27238027  0.17382785
     ## 
     ## Coefficients of linear discriminants:
     ##            LD1
-    ## PC1 -0.4767508
-    ## PC2  0.1873273
-    ## PC3 -0.1902564
-    ## PC4 -0.2314241
-    ## PC5  0.1962748
+    ## PC1 -0.4579464
+    ## PC2  0.1644163
+    ## PC3 -0.2334756
+    ## PC4 -0.1854051
+    ## PC5  0.1393228
 
 Let's use this to predict by passing the predict function's newdata as the testing dataset.
 
@@ -524,11 +635,11 @@ Our predictions are contained in the `class` attribute.
 (wdbc.lda.predict.class <- wdbc.lda.predict$class)
 ```
 
-    ##   [1] 1 1 1 1 1 1 1 0 1 0 1 0 1 1 1 0 0 0 1 0 1 0 1 0 1 0 0 0 1 0 1 1 0 0 1
-    ##  [36] 0 0 0 1 0 1 0 0 1 0 1 0 1 0 1 1 0 0 0 0 1 1 0 0 0 1 0 1 1 0 1 0 0 1 0
-    ##  [71] 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 0 0 1 0 0 0 0
-    ## [106] 1 1 1 0 1 0 1 0 0 0 0 0 1 0 0 0 0 0 0 1 0 0 1 0 0 1 0 1 0 0 0 0 0 0 0
-    ## [141] 0 0 0 0 0 0 0 0 0 0
+    ##   [1] 1 1 1 1 1 1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 1 0
+    ##  [36] 0 0 1 0 0 0 1 0 1 1 0 1 0 1 0 1 0 0 1 1 1 1 0 1 0 1 0 0 0 1 0 0 0 0 0
+    ##  [71] 0 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 1 1 0 0 0 0 0 0 1 0 0 0 1 0 0 0 0 0 0
+    ## [106] 0 0 0 0 0 0 1 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 0 1 0 1 0
+    ## [141] 0 0 1 1 1 1 1
     ## Levels: 0 1
 
 Next, compare the accuracy of these predictions with the original data.
@@ -541,12 +652,12 @@ A simple way to validate the accuracy of our model in predicting diagnosis (M or
 
     ##                       
     ## wdbc.lda.predict.class  0  1
-    ##                      0 90 10
-    ##                      1  0 50
+    ##                      0 98  5
+    ##                      1  1 43
 
-So according to this output, the model predicted 90 times that the diagnosis is 0 (benign) when the actual observation was 0 (benign) and 10 times it predicted incorrectly. Similarly, the model predicted that the diagnosis is 1 (malignant) 50 times correctly and 0 predicted incorrectly.
+So according to this output, the model predicted 98 times that the diagnosis is 0 (benign) when the actual observation was 0 (benign) and 5 times it predicted incorrectly. Similarly, the model predicted that the diagnosis is 1 (malignant) 43 times correctly and 1 predicted incorrectly.
 
-The accuracy of this model in predicting benign tumors is 0.9 or 90% accurate. The accuracy of this model in predicting malignant tumors is 1 or 100% accurate.
+The accuracy of this model in predicting benign tumors is 0.9514563 or 95.1456311% accurate. The accuracy of this model in predicting malignant tumors is 0.9772727 or 97.7272727% accurate.
 
 What is the classification accuracy of this model ?
 
@@ -579,14 +690,14 @@ str(splitPlan)
 
     ## List of 3
     ##  $ :List of 2
-    ##   ..$ train: int [1:380] 2 3 6 7 8 9 10 11 12 13 ...
-    ##   ..$ app  : int [1:189] 435 279 516 191 240 64 547 27 371 285 ...
+    ##   ..$ train: int [1:380] 2 3 4 6 7 8 10 11 12 13 ...
+    ##   ..$ app  : int [1:189] 272 465 431 108 170 98 171 129 227 182 ...
     ##  $ :List of 2
-    ##   ..$ train: int [1:379] 1 2 4 5 6 7 9 10 11 12 ...
-    ##   ..$ app  : int [1:190] 106 461 65 427 39 347 296 551 154 274 ...
+    ##   ..$ train: int [1:379] 1 3 4 5 9 10 11 13 16 17 ...
+    ##   ..$ app  : int [1:190] 14 409 346 147 525 157 229 203 434 137 ...
     ##  $ :List of 2
-    ##   ..$ train: int [1:379] 1 3 4 5 8 14 15 16 17 18 ...
-    ##   ..$ app  : int [1:190] 50 515 439 276 13 565 6 490 247 105 ...
+    ##   ..$ train: int [1:379] 1 2 5 6 7 8 9 12 14 15 ...
+    ##   ..$ app  : int [1:190] 268 231 358 504 510 103 274 247 196 343 ...
     ##  - attr(*, "splitmethod")= chr "kwaycross"
 
 Here, k is the number of folds and `splitplan` is the cross validation plan
@@ -607,16 +718,16 @@ for ( i in 1:k ) {
 
     ##    
     ##       0   1
-    ##   0 120   7
-    ##   1   0  62
+    ##   0 130   6
+    ##   1   0  53
+    ##    
+    ##       0   1
+    ##   0 113  12
+    ##   1   0  65
     ##    
     ##       0   1
     ##   0 114  12
     ##   1   0  64
-    ##    
-    ##       0   1
-    ##   0 123   5
-    ##   1   0  62
 
 ### 10-fold cross validation
 
@@ -642,44 +753,44 @@ for ( i in 1:k ) {
 
     ##    
     ##      0  1
-    ##   0 31  4
+    ##   0 39  3
+    ##   1  0 14
+    ##    
+    ##      0  1
+    ##   0 38  3
+    ##   1  0 16
+    ##    
+    ##      0  1
+    ##   0 40  3
+    ##   1  0 14
+    ##    
+    ##      0  1
+    ##   0 30  6
     ##   1  0 21
+    ##    
+    ##      0  1
+    ##   0 34  2
+    ##   1  1 20
+    ##    
+    ##      0  1
+    ##   0 36  1
+    ##   1  0 20
+    ##    
+    ##      0  1
+    ##   0 31  4
+    ##   1  0 22
+    ##    
+    ##      0  1
+    ##   0 40  0
+    ##   1  0 17
     ##    
     ##      0  1
     ##   0 31  3
     ##   1  0 23
     ##    
     ##      0  1
-    ##   0 39  2
-    ##   1  0 16
-    ##    
-    ##      0  1
-    ##   0 37  2
-    ##   1  0 18
-    ##    
-    ##      0  1
-    ##   0 33  1
-    ##   1  0 23
-    ##    
-    ##      0  1
-    ##   0 36  2
-    ##   1  1 18
-    ##    
-    ##      0  1
-    ##   0 36  4
+    ##   0 37  3
     ##   1  0 17
-    ##    
-    ##      0  1
-    ##   0 38  2
-    ##   1  0 17
-    ##    
-    ##      0  1
-    ##   0 40  2
-    ##   1  0 15
-    ##    
-    ##      0  1
-    ##   0 35  6
-    ##   1  0 16
 
 An advanced way of validating the accuracy of our model is by using a k-fold cross-validation.
 
