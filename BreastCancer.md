@@ -298,24 +298,6 @@ summary(wdbc.pcov)
     ## Proportion of Variance 4.436669e-12 1.553447e-12
     ## Cumulative Proportion  1.000000e+00 1.000000e+00
 
-Get the eigen values:
-
-``` r
-# Eigen values using covariance matrix
-round(wdbc.pcov$sdev ^2,4)
-```
-
-    ##      Comp.1      Comp.2      Comp.3      Comp.4      Comp.5      Comp.6 
-    ## 443002.6709   7297.2528    702.5968     54.5527     39.8199      2.9993 
-    ##      Comp.7      Comp.8      Comp.9     Comp.10     Comp.11     Comp.12 
-    ##      1.8121      0.3708      0.1552      0.0839      0.0316      0.0075 
-    ##     Comp.13     Comp.14     Comp.15     Comp.16     Comp.17     Comp.18 
-    ##      0.0032      0.0022      0.0013      0.0006      0.0004      0.0002 
-    ##     Comp.19     Comp.20     Comp.21     Comp.22     Comp.23     Comp.24 
-    ##      0.0002      0.0002      0.0001      0.0001      0.0000      0.0000 
-    ##     Comp.25     Comp.26     Comp.27     Comp.28     Comp.29     Comp.30 
-    ##      0.0000      0.0000      0.0000      0.0000      0.0000      0.0000
-
 Bi-plot using covariance matrix:
 
 ``` r
@@ -324,7 +306,7 @@ par(cex = 0.7)
 biplot(wdbc.pcov)
 ```
 
-![](BreastCancer_files/figure-markdown_github/unnamed-chunk-13-1.png)
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-12-1.png)
 
 ``` r
 par(cex = cex.before)
@@ -342,6 +324,52 @@ pr.cvar <- wdbc.pcov$sdev ^ 2
 # Variance explained by each principal component: pve
 pve_cov <- pr.cvar/sum(pr.cvar)
 ```
+
+Before visualizing the scree-plot, lets check the values:
+
+``` r
+# Eigen values
+round(pr.cvar, 2)
+```
+
+    ##    Comp.1    Comp.2    Comp.3    Comp.4    Comp.5    Comp.6    Comp.7 
+    ## 443002.67   7297.25    702.60     54.55     39.82      3.00      1.81 
+    ##    Comp.8    Comp.9   Comp.10   Comp.11   Comp.12   Comp.13   Comp.14 
+    ##      0.37      0.16      0.08      0.03      0.01      0.00      0.00 
+    ##   Comp.15   Comp.16   Comp.17   Comp.18   Comp.19   Comp.20   Comp.21 
+    ##      0.00      0.00      0.00      0.00      0.00      0.00      0.00 
+    ##   Comp.22   Comp.23   Comp.24   Comp.25   Comp.26   Comp.27   Comp.28 
+    ##      0.00      0.00      0.00      0.00      0.00      0.00      0.00 
+    ##   Comp.29   Comp.30 
+    ##      0.00      0.00
+
+``` r
+# Percent variance explained
+round(pve_cov, 2)
+```
+
+    ##  Comp.1  Comp.2  Comp.3  Comp.4  Comp.5  Comp.6  Comp.7  Comp.8  Comp.9 
+    ##    0.98    0.02    0.00    0.00    0.00    0.00    0.00    0.00    0.00 
+    ## Comp.10 Comp.11 Comp.12 Comp.13 Comp.14 Comp.15 Comp.16 Comp.17 Comp.18 
+    ##    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00 
+    ## Comp.19 Comp.20 Comp.21 Comp.22 Comp.23 Comp.24 Comp.25 Comp.26 Comp.27 
+    ##    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00 
+    ## Comp.28 Comp.29 Comp.30 
+    ##    0.00    0.00    0.00
+
+``` r
+# Cummulative percent explained
+round(cumsum(pve_cov), 2)
+```
+
+    ##  Comp.1  Comp.2  Comp.3  Comp.4  Comp.5  Comp.6  Comp.7  Comp.8  Comp.9 
+    ##    0.98    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00 
+    ## Comp.10 Comp.11 Comp.12 Comp.13 Comp.14 Comp.15 Comp.16 Comp.17 Comp.18 
+    ##    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00 
+    ## Comp.19 Comp.20 Comp.21 Comp.22 Comp.23 Comp.24 Comp.25 Comp.26 Comp.27 
+    ##    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00 
+    ## Comp.28 Comp.29 Comp.30 
+    ##    1.00    1.00    1.00
 
 Create a plot of variance explained for each principal component.
 
@@ -396,6 +424,19 @@ summary(wdbc.pr)
 
 84.73% of the variation is explained by the first five PC's.
 
+Get the eigen values of correlation matrix:
+
+``` r
+# Eigen values using covariance matrix
+
+round(wdbc.pr$sdev ^2,4)
+```
+
+    ##  [1] 13.2816  5.6914  2.8179  1.9806  1.6487  1.2074  0.6752  0.4766
+    ##  [9]  0.4169  0.3507  0.2939  0.2612  0.2414  0.1570  0.0941  0.0799
+    ## [17]  0.0594  0.0526  0.0495  0.0312  0.0300  0.0274  0.0243  0.0181
+    ## [25]  0.0155  0.0082  0.0069  0.0016  0.0007  0.0001
+
 ### Bi-Plot
 
 Let's create a bi-plot to visualize this:
@@ -406,7 +447,7 @@ par(cex = 0.7)
 biplot(wdbc.pr)
 ```
 
-![](BreastCancer_files/figure-markdown_github/unnamed-chunk-17-1.png)
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-18-1.png)
 
 ``` r
 par(cex = cex.before)
@@ -420,9 +461,10 @@ Create a scatter plot of observations by components 1 and 2
 # Scatter plot observations by components 1 and 2
 plot(wdbc.pr$x[, c(1, 2)], col = (diagnosis + 1), 
      xlab = "PC1", ylab = "PC2")
+legend(x="topleft", pch=1, col = c("red", "black"), legend = c("B", "M"))
 ```
 
-![](BreastCancer_files/figure-markdown_github/unnamed-chunk-18-1.png)
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-19-1.png)
 
 There is a clear seperation of diagnosis (M or B) that is evident in the PC1 vs PC2 plot.
 
@@ -432,11 +474,39 @@ Let's also take PC1 vs PC3 plot:
 # Repeat for components 1 and 3
 plot(wdbc.pr$x[, c(1,3)], col = (diagnosis + 1), 
      xlab = "PC1", ylab = "PC3")
+legend(x="topleft", pch=1, col = c("red", "black"), legend = c("B", "M"))
 ```
 
-![](BreastCancer_files/figure-markdown_github/unnamed-chunk-19-1.png)
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-20-1.png)
 
 Because principal component 2 explains more variance in the original data than principal component 3, you can see that the first plot has a cleaner cut separating the two subgroups.
+
+``` r
+# Repeat for components 1 and 3
+plot(wdbc.pr$x[, c(1,4)], col = (diagnosis + 1), 
+     xlab = "PC1", ylab = "PC4")
+legend(x="topleft", pch=1, col = c("red", "black"), legend = c("B", "M"))
+```
+
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-21-1.png)
+
+``` r
+# Repeat for components 1 and 3
+plot(wdbc.pr$x[, c(1,5)], col = (diagnosis + 1), 
+     xlab = "PC1", ylab = "PC5")
+legend(x="topleft", pch=1, col = c("red", "black"), legend = c("B", "M"))
+```
+
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-22-1.png)
+
+``` r
+# Repeat for components 1 and 6
+plot(wdbc.pr$x[, c(1,6)], col = (diagnosis + 1), 
+     xlab = "PC1", ylab = "PC6")
+legend(x="topleft", pch=1, col = c("red", "black"), legend = c("B", "M"))
+```
+
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-23-1.png)
 
 ### Scree plots
 
@@ -449,9 +519,61 @@ par(mfrow = c(1, 2))
 # Calculate variability of each component
 pr.var <- wdbc.pr$sdev ^ 2
 
+# Assign names to the columns to be consistent with princomp.
+# This is done for reporting purposes.
+names(pr.var) <- names(pr.cvar)
+
 # Variance explained by each principal component: pve
 pve <- pr.var/sum(pr.var)
+
+# Assign names to the columns as it is not done by default.
+# This is done to be consistent with princomp.
+names(pve) <- names(pve_cov)
 ```
+
+Before creating the plot, let's see the values
+
+``` r
+# Eigen values
+round(pr.var, 2)
+```
+
+    ##  Comp.1  Comp.2  Comp.3  Comp.4  Comp.5  Comp.6  Comp.7  Comp.8  Comp.9 
+    ##   13.28    5.69    2.82    1.98    1.65    1.21    0.68    0.48    0.42 
+    ## Comp.10 Comp.11 Comp.12 Comp.13 Comp.14 Comp.15 Comp.16 Comp.17 Comp.18 
+    ##    0.35    0.29    0.26    0.24    0.16    0.09    0.08    0.06    0.05 
+    ## Comp.19 Comp.20 Comp.21 Comp.22 Comp.23 Comp.24 Comp.25 Comp.26 Comp.27 
+    ##    0.05    0.03    0.03    0.03    0.02    0.02    0.02    0.01    0.01 
+    ## Comp.28 Comp.29 Comp.30 
+    ##    0.00    0.00    0.00
+
+``` r
+# Percent variance explained
+round(pve, 2)
+```
+
+    ##  Comp.1  Comp.2  Comp.3  Comp.4  Comp.5  Comp.6  Comp.7  Comp.8  Comp.9 
+    ##    0.44    0.19    0.09    0.07    0.05    0.04    0.02    0.02    0.01 
+    ## Comp.10 Comp.11 Comp.12 Comp.13 Comp.14 Comp.15 Comp.16 Comp.17 Comp.18 
+    ##    0.01    0.01    0.01    0.01    0.01    0.00    0.00    0.00    0.00 
+    ## Comp.19 Comp.20 Comp.21 Comp.22 Comp.23 Comp.24 Comp.25 Comp.26 Comp.27 
+    ##    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00 
+    ## Comp.28 Comp.29 Comp.30 
+    ##    0.00    0.00    0.00
+
+``` r
+# Cummulative percent explained
+round(cumsum(pve), 2)
+```
+
+    ##  Comp.1  Comp.2  Comp.3  Comp.4  Comp.5  Comp.6  Comp.7  Comp.8  Comp.9 
+    ##    0.44    0.63    0.73    0.79    0.85    0.89    0.91    0.93    0.94 
+    ## Comp.10 Comp.11 Comp.12 Comp.13 Comp.14 Comp.15 Comp.16 Comp.17 Comp.18 
+    ##    0.95    0.96    0.97    0.98    0.98    0.99    0.99    0.99    0.99 
+    ## Comp.19 Comp.20 Comp.21 Comp.22 Comp.23 Comp.24 Comp.25 Comp.26 Comp.27 
+    ##    0.99    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00 
+    ## Comp.28 Comp.29 Comp.30 
+    ##    1.00    1.00    1.00
 
 Create a plot of variance explained for each principal component.
 
@@ -462,7 +584,7 @@ plot(pve, xlab = "Principal Component",
      ylim = c(0, 1), type = "b")
 ```
 
-![](BreastCancer_files/figure-markdown_github/unnamed-chunk-21-1.png)
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-26-1.png)
 
 ``` r
 # Plot cumulative proportion of variance explained
@@ -471,7 +593,7 @@ plot(cumsum(pve), xlab = "Principal Component",
      ylim = c(0, 1), type = "b")
 ```
 
-![](BreastCancer_files/figure-markdown_github/unnamed-chunk-21-2.png)
+![](BreastCancer_files/figure-markdown_github/unnamed-chunk-26-2.png)
 
 Scree-plots suggest that 80% of the variation in the numeric data is captured in the first 5 PCs.
 
@@ -491,7 +613,7 @@ ls(wdbc.pr)
 We are interested in the `rotation` (also called loadings) of the first five principal components multiplied by the scaled data, which are called `scores` (basically PC transformed data)
 
 ``` r
-wdbc.pcs <- wdbc.pr$x[,1:5]
+wdbc.pcs <- wdbc.pr$x[,1:6]
 head(wdbc.pcs, 20)
 ```
 
@@ -516,6 +638,27 @@ head(wdbc.pcs, 20)
     ## 84862001 -4.4141269  -1.41742315 -2.2683231 -0.18610866  1.42260945
     ## 849014   -4.9443530   4.11071653 -0.3144724 -0.08812897  0.05666532
     ## 8510426   1.2359758   0.18804949 -0.5927619  1.59494272  0.44176553
+    ##                  PC6
+    ## 842302    1.41018364
+    ## 842517    0.02863116
+    ## 84300903  0.54097615
+    ## 84348301  3.05073750
+    ## 84358402 -1.22541641
+    ## 843786   -0.45064213
+    ## 844359   -0.12883507
+    ## 84458202 -1.25593410
+    ## 844981    0.55905282
+    ## 84501001 -0.72327234
+    ## 845636    0.12721990
+    ## 84610002  0.76419423
+    ## 846226    2.59229030
+    ## 846381    1.00677426
+    ## 84667401 -0.34940880
+    ## 84799002  0.49534213
+    ## 848406   -0.76152096
+    ## 84862001 -0.75182778
+    ## 849014   -1.13668869
+    ## 8510426  -0.04859402
 
 Here, the rownames help us see how the PC transformed data looks like.
 
@@ -527,13 +670,20 @@ wdbc.pcst <- cbind(wdbc.pcs, diagnosis)
 head(wdbc.pcst)
 ```
 
-    ##                PC1        PC2        PC3       PC4        PC5 diagnosis
-    ## 842302   -9.184755  -1.946870 -1.1221788 3.6305364  1.1940595         1
-    ## 842517   -2.385703   3.764859 -0.5288274 1.1172808 -0.6212284         1
-    ## 84300903 -5.728855   1.074229 -0.5512625 0.9112808  0.1769302         1
-    ## 84348301 -7.116691 -10.266556 -3.2299475 0.1524129  2.9582754         1
-    ## 84358402 -3.931842   1.946359  1.3885450 2.9380542 -0.5462667         1
-    ## 843786   -2.378155  -3.946456 -2.9322967 0.9402096  1.0551135         1
+    ##                PC1        PC2        PC3       PC4        PC5         PC6
+    ## 842302   -9.184755  -1.946870 -1.1221788 3.6305364  1.1940595  1.41018364
+    ## 842517   -2.385703   3.764859 -0.5288274 1.1172808 -0.6212284  0.02863116
+    ## 84300903 -5.728855   1.074229 -0.5512625 0.9112808  0.1769302  0.54097615
+    ## 84348301 -7.116691 -10.266556 -3.2299475 0.1524129  2.9582754  3.05073750
+    ## 84358402 -3.931842   1.946359  1.3885450 2.9380542 -0.5462667 -1.22541641
+    ## 843786   -2.378155  -3.946456 -2.9322967 0.9402096  1.0551135 -0.45064213
+    ##          diagnosis
+    ## 842302           1
+    ## 842517           1
+    ## 84300903         1
+    ## 84348301         1
+    ## 84358402         1
+    ## 843786           1
 
 Here, diagnosis == 1 represents malignant and diagnosis == 0 represents benign.
 
@@ -561,15 +711,15 @@ wdbc.pcst.test <- wdbc.pcst[rvec >= 0.75,]
 nrow(wdbc.pcst.train)
 ```
 
-    ## [1] 422
+    ## [1] 428
 
 ``` r
 nrow(wdbc.pcst.test)
 ```
 
-    ## [1] 147
+    ## [1] 141
 
-So, 422 observations are in training dataset and 147 observations are in the test dataset. We will use the training dataset to calculate the `linear discriminant function` by passing it to the `lda()` function of the `MASS` package.
+So, 428 observations are in training dataset and 141 observations are in the test dataset. We will use the training dataset to calculate the `linear discriminant function` by passing it to the `lda()` function of the `MASS` package.
 
 ``` r
 library(MASS)
@@ -580,7 +730,7 @@ wdbc.pcst.train.df <- wdbc.pcst.train
 wdbc.pcst.train.df <- as.data.frame(wdbc.pcst.train)
 
 # Perform LDA on diagnosis
-wdbc.lda <- lda(diagnosis ~ PC1 + PC2 + PC3 + PC4 + PC5, data = wdbc.pcst.train.df)
+wdbc.lda <- lda(diagnosis ~ PC1 + PC2 + PC3 + PC4 + PC5 + PC6, data = wdbc.pcst.train.df)
 ```
 
 Let's summarize the LDA output:
@@ -590,24 +740,25 @@ wdbc.lda
 ```
 
     ## Call:
-    ## lda(diagnosis ~ PC1 + PC2 + PC3 + PC4 + PC5, data = wdbc.pcst.train.df)
+    ## lda(diagnosis ~ PC1 + PC2 + PC3 + PC4 + PC5 + PC6, data = wdbc.pcst.train.df)
     ## 
     ## Prior probabilities of groups:
     ##         0         1 
-    ## 0.6113744 0.3886256 
+    ## 0.6378505 0.3621495 
     ## 
     ## Group means:
-    ##         PC1        PC2        PC3         PC4         PC5
-    ## 0  2.267949 -0.2229657  0.2600170  0.07943201 -0.08497233
-    ## 1 -3.531331  0.5190802 -0.5630661 -0.27238027  0.17382785
+    ##         PC1        PC2        PC3        PC4         PC5        PC6
+    ## 0  2.159042 -0.4137349  0.2353578  0.1706320 -0.02677891 0.01803605
+    ## 1 -3.608992  0.6422433 -0.3102083 -0.2190455  0.15641364 0.04978323
     ## 
     ## Coefficients of linear discriminants:
-    ##            LD1
-    ## PC1 -0.4579464
-    ## PC2  0.1644163
-    ## PC3 -0.2334756
-    ## PC4 -0.1854051
-    ## PC5  0.1393228
+    ##             LD1
+    ## PC1 -0.46192354
+    ## PC2  0.17746000
+    ## PC3 -0.20135626
+    ## PC4 -0.20313361
+    ## PC5  0.13543978
+    ## PC6 -0.03737763
 
 Let's use this to predict by passing the predict function's newdata as the testing dataset.
 
@@ -635,11 +786,11 @@ Our predictions are contained in the `class` attribute.
 (wdbc.lda.predict.class <- wdbc.lda.predict$class)
 ```
 
-    ##   [1] 1 1 1 1 1 1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 1 0
-    ##  [36] 0 0 1 0 0 0 1 0 1 1 0 1 0 1 0 1 0 0 1 1 1 1 0 1 0 1 0 0 0 1 0 0 0 0 0
-    ##  [71] 0 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 1 1 0 0 0 0 0 0 1 0 0 0 1 0 0 0 0 0 0
-    ## [106] 0 0 0 0 0 0 1 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 0 1 0 1 0
-    ## [141] 0 0 1 1 1 1 1
+    ##   [1] 1 1 1 0 1 1 0 1 1 0 1 0 0 1 1 0 1 0 0 0 0 0 0 0 0 1 0 1 1 0 1 0 1 1 0
+    ##  [36] 0 0 1 0 0 0 1 0 0 1 0 0 0 0 1 1 1 1 0 0 1 1 0 0 1 0 0 1 1 1 1 0 0 0 1
+    ##  [71] 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 0 1 1 1 0 0 0 0 1 1 0 1 0 0 0 0 1 0 0 0
+    ## [106] 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0 0 1 0 1 1 0 1 1 0 1 0 0 0 1
+    ## [141] 1
     ## Levels: 0 1
 
 Next, compare the accuracy of these predictions with the original data.
@@ -652,12 +803,12 @@ A simple way to validate the accuracy of our model in predicting diagnosis (M or
 
     ##                       
     ## wdbc.lda.predict.class  0  1
-    ##                      0 98  5
-    ##                      1  1 43
+    ##                      0 84  5
+    ##                      1  0 52
 
-So according to this output, the model predicted 98 times that the diagnosis is 0 (benign) when the actual observation was 0 (benign) and 5 times it predicted incorrectly. Similarly, the model predicted that the diagnosis is 1 (malignant) 43 times correctly and 1 predicted incorrectly.
+So according to this output, the model predicted 84 times that the diagnosis is 0 (benign) when the actual observation was 0 (benign) and 5 times it predicted incorrectly. Similarly, the model predicted that the diagnosis is 1 (malignant) 52 times correctly and 0 predicted incorrectly.
 
-The accuracy of this model in predicting benign tumors is 0.9514563 or 95.1456311% accurate. The accuracy of this model in predicting malignant tumors is 0.9772727 or 97.7272727% accurate.
+The accuracy of this model in predicting benign tumors is 0.9438202 or 94.3820225% accurate. The accuracy of this model in predicting malignant tumors is 1 or 100% accurate.
 
 What is the classification accuracy of this model ?
 
@@ -690,14 +841,14 @@ str(splitPlan)
 
     ## List of 3
     ##  $ :List of 2
-    ##   ..$ train: int [1:380] 2 3 4 6 7 8 10 11 12 13 ...
-    ##   ..$ app  : int [1:189] 272 465 431 108 170 98 171 129 227 182 ...
+    ##   ..$ train: int [1:380] 1 2 4 5 6 7 8 9 10 11 ...
+    ##   ..$ app  : int [1:189] 441 517 268 125 50 242 315 37 73 239 ...
     ##  $ :List of 2
-    ##   ..$ train: int [1:379] 1 3 4 5 9 10 11 13 16 17 ...
-    ##   ..$ app  : int [1:190] 14 409 346 147 525 157 229 203 434 137 ...
+    ##   ..$ train: int [1:379] 1 2 3 7 11 12 13 15 17 19 ...
+    ##   ..$ app  : int [1:190] 512 59 279 249 539 439 56 18 98 10 ...
     ##  $ :List of 2
-    ##   ..$ train: int [1:379] 1 2 5 6 7 8 9 12 14 15 ...
-    ##   ..$ app  : int [1:190] 268 231 358 504 510 103 274 247 196 343 ...
+    ##   ..$ train: int [1:379] 3 4 5 6 8 9 10 12 14 15 ...
+    ##   ..$ app  : int [1:190] 536 497 277 467 326 531 452 76 407 150 ...
     ##  - attr(*, "splitmethod")= chr "kwaycross"
 
 Here, k is the number of folds and `splitplan` is the cross validation plan
@@ -708,7 +859,7 @@ k <- 3
 
 for ( i in 1:k ) {
   split <- splitPlan[[i]]
-  model <- lda(diagnosis ~ PC1 + PC2 + PC3 + PC4 + PC5, data = wdbc.pcst.df[split$train,])
+  model <- lda(diagnosis ~ PC1 + PC2 + PC3 + PC4 + PC5 + PC6, data = wdbc.pcst.df[split$train,])
   model.pred.cv <- predict(model, newdata = wdbc.pcst.df[split$app,])
   
   confMat <- table(model.pred.cv$class, wdbc.pcst.df$diagnosis[split$app])
@@ -718,16 +869,16 @@ for ( i in 1:k ) {
 
     ##    
     ##       0   1
-    ##   0 130   6
-    ##   1   0  53
-    ##    
-    ##       0   1
-    ##   0 113  12
-    ##   1   0  65
-    ##    
-    ##       0   1
-    ##   0 114  12
+    ##   0 116   9
     ##   1   0  64
+    ##    
+    ##       0   1
+    ##   0 112  14
+    ##   1   1  63
+    ##    
+    ##       0   1
+    ##   0 128   7
+    ##   1   0  55
 
 ### 10-fold cross validation
 
@@ -743,7 +894,7 @@ splitPlan <- kWayCrossValidation(nRows, 10, NULL, NULL)
 
 for ( i in 1:k ) {
   split <- splitPlan[[i]]
-  model <- lda(diagnosis ~ PC1 + PC2 + PC3 + PC4 + PC5, data = wdbc.pcst.df[split$train,])
+  model <- lda(diagnosis ~ PC1 + PC2 + PC3 + PC4 + PC5 + PC6, data = wdbc.pcst.df[split$train,])
   model.pred.cv <- predict(model, newdata = wdbc.pcst.df[split$app,])
   
   confMat <- table(model.pred.cv$class, wdbc.pcst.df$diagnosis[split$app])
@@ -753,44 +904,44 @@ for ( i in 1:k ) {
 
     ##    
     ##      0  1
-    ##   0 39  3
+    ##   0 38  0
+    ##   1  0 18
+    ##    
+    ##      0  1
+    ##   0 38  5
     ##   1  0 14
     ##    
     ##      0  1
-    ##   0 38  3
-    ##   1  0 16
+    ##   0 37  1
+    ##   1  0 19
     ##    
     ##      0  1
-    ##   0 40  3
-    ##   1  0 14
+    ##   0 41  3
+    ##   1  0 13
     ##    
     ##      0  1
-    ##   0 30  6
-    ##   1  0 21
+    ##   0 36  2
+    ##   1  0 19
     ##    
     ##      0  1
-    ##   0 34  2
-    ##   1  1 20
-    ##    
-    ##      0  1
-    ##   0 36  1
+    ##   0 33  4
     ##   1  0 20
     ##    
     ##      0  1
-    ##   0 31  4
-    ##   1  0 22
+    ##   0 34  4
+    ##   1  0 19
     ##    
     ##      0  1
-    ##   0 40  0
-    ##   1  0 17
+    ##   0 32  6
+    ##   1  0 19
     ##    
     ##      0  1
-    ##   0 31  3
-    ##   1  0 23
+    ##   0 37  1
+    ##   1  1 18
     ##    
     ##      0  1
-    ##   0 37  3
-    ##   1  0 17
+    ##   0 30  1
+    ##   1  0 26
 
 An advanced way of validating the accuracy of our model is by using a k-fold cross-validation.
 
