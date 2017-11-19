@@ -130,7 +130,7 @@ colnames(corMatrix) <- cNames
 M <- round(cor(corMatrix), 2)
 
 # Create corrplot
-corrplot(M, diag = FALSE, method="color", order="FPC", tl.srt = 90, cl.offset = 0.5)
+corrplot(M, diag = FALSE, method="color", order="FPC", tl.srt = 90)
 
 ```
 
@@ -138,13 +138,14 @@ From the corrplot, it is evident that there are many variables that are highly c
 
 ## PCA
 
-Due to the number of variables in the model, we can try using a dimentionality reduction technique to unveil any patterns in the data. It also helps in visualizing a multi-dimentional dataset like this.
+*Why PCA?*
+Due to the number of variables in the model, we can try using a dimensionality reduction technique to unveil any patterns in the data. As mentioned in the Exploratory Data Analysis section, there are thirty variables that when combined can be used to model each patient’s diagnosis. Using PCA we can combine our many variables into different linear combinations that each explain a part of the variance of the model. By proceeding with PCA we are assuming the linearity of the combinations of our variables within the dataset. By choosing only the linear combinations that provide a majority (>= 85%) of the co-variance, we can reduce the complexity of our model. We can then more easily see how the model works and provide meaningful graphs and representations of our complex dataset.
 
 The first step in doing a PCA, is to ask ourselves whether or not the data should be scaled to unit variance. That is, to bring all the numeric variables to the same scale. In other words, we are trying to determine whether we should use a correlation matrix or a covariance matrix in our calculations of eigen values and eigen vectors (aka principal components).
 
-Based on the output from `mean` and `sd`, it does appear that some variables have larger variance, e.g. area_worst. Hence we should use scaling. (will get this later and prove why we need to scale)
-
 ### Running a PCA using covariance matrix:
+
+When the covariance matrix is used to calculate the eigen values and eigen vectors, we use the `princomp()` function. Let's take a look at the summary of the princomp output.
 
 ```{r}
 wdbc.pcov <- princomp(wdbc.data, scores = TRUE)
@@ -152,6 +153,8 @@ summary(wdbc.pcov)
 ```
 
 Bi-plot using covariance matrix:
+Looking at the descriptive statistics of “area_mean” and “area_worst”, we can observe that they have unusually large values for both mean and standard deviation. The units of measurements for these variables are different than the units of measurements of the other numeric variables. The effect of using variables with different scales can lead to amplified variances. This can be visually assessed by looking at the bi-plot of PC1 vs PC2, calculated from using non-scaled data (vs) scaled data. Below output shows non-scaled data since we are using a covariance matrix.
+
 ```{r warning=FALSE}
 cex.before <- par("cex")
 par(cex = 0.7)
@@ -159,7 +162,7 @@ biplot(wdbc.pcov)
 par(cex = cex.before)
 ```
 
-Scree plots can be useful in deciding how many PC's we should keep in the model. Let's create the scree-plots in R. As there is no R function to create a scree-plot, we need to prepare the data for the plot.
+We can extract the eigen values from the princomp() function output. The square of the sdev's gives us the eigen value of each component.
 
 ```{r}
 # Set up 1 x 2 plotting grid
@@ -172,7 +175,7 @@ pr.cvar <- wdbc.pcov$sdev ^ 2
 pve_cov <- pr.cvar/sum(pr.cvar)
 ```
 
-Before visualizing the scree-plot, lets check the values:
+We can then calculate the cumulative proportion explained at each principal component. This will be later useful when creating the screeplots.
 ```{r}
 # Eigen values
 round(pr.cvar, 2)
@@ -183,6 +186,8 @@ round(pve_cov, 2)
 # Cummulative percent explained
 round(cumsum(pve_cov), 2)
 ```
+
+Scree plots can be useful in deciding how many PC's we should keep in the model. Let's create the scree-plots in R. As there is no R function to create a scree-plot, we need to prepare the data for the plot.
 
 Create a plot of variance explained for each principal component.
 

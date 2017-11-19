@@ -241,7 +241,7 @@ colnames(corMatrix) <- cNames
 M <- round(cor(corMatrix), 2)
 
 # Create corrplot
-corrplot(M, diag = FALSE, method="color", order="FPC", tl.srt = 90, cl.offset = 0.5)
+corrplot(M, diag = FALSE, method="color", order="FPC", tl.srt = 90)
 ```
 
 ![](BreastCancer_files/figure-markdown_github/unnamed-chunk-10-1.png)
@@ -251,13 +251,13 @@ From the corrplot, it is evident that there are many variables that are highly c
 PCA
 ---
 
-Due to the number of variables in the model, we can try using a dimentionality reduction technique to unveil any patterns in the data. It also helps in visualizing a multi-dimentional dataset like this.
+*Why PCA?* Due to the number of variables in the model, we can try using a dimensionality reduction technique to unveil any patterns in the data. As mentioned in the Exploratory Data Analysis section, there are thirty variables that when combined can be used to model each patient’s diagnosis. Using PCA we can combine our many variables into different linear combinations that each explain a part of the variance of the model. By proceeding with PCA we are assuming the linearity of the combinations of our variables within the dataset. By choosing only the linear combinations that provide a majority (&gt;= 85%) of the co-variance, we can reduce the complexity of our model. We can then more easily see how the model works and provide meaningful graphs and representations of our complex dataset.
 
 The first step in doing a PCA, is to ask ourselves whether or not the data should be scaled to unit variance. That is, to bring all the numeric variables to the same scale. In other words, we are trying to determine whether we should use a correlation matrix or a covariance matrix in our calculations of eigen values and eigen vectors (aka principal components).
 
-Based on the output from `mean` and `sd`, it does appear that some variables have larger variance, e.g. area\_worst. Hence we should use scaling. (will get this later and prove why we need to scale)
-
 ### Running a PCA using covariance matrix:
+
+When the covariance matrix is used to calculate the eigen values and eigen vectors, we use the `princomp()` function. Let's take a look at the summary of the princomp output.
 
 ``` r
 wdbc.pcov <- princomp(wdbc.data, scores = TRUE)
@@ -298,7 +298,7 @@ summary(wdbc.pcov)
     ## Proportion of Variance 4.436669e-12 1.553447e-12
     ## Cumulative Proportion  1.000000e+00 1.000000e+00
 
-Bi-plot using covariance matrix:
+Bi-plot using covariance matrix: Looking at the descriptive statistics of “area\_mean” and “area\_worst”, we can observe that they have unusually large values for both mean and standard deviation. The units of measurements for these variables are different than the units of measurements of the other numeric variables. The effect of using variables with different scales can lead to amplified variances. This can be visually assessed by looking at the bi-plot of PC1 vs PC2, calculated from using non-scaled data (vs) scaled data. Below output shows non-scaled data since we are using a covariance matrix.
 
 ``` r
 cex.before <- par("cex")
@@ -711,15 +711,15 @@ wdbc.pcst.test <- wdbc.pcst[rvec >= 0.75,]
 nrow(wdbc.pcst.train)
 ```
 
-    ## [1] 428
+    ## [1] 430
 
 ``` r
 nrow(wdbc.pcst.test)
 ```
 
-    ## [1] 141
+    ## [1] 139
 
-So, 428 observations are in training dataset and 141 observations are in the test dataset. We will use the training dataset to calculate the `linear discriminant function` by passing it to the `lda()` function of the `MASS` package.
+So, 430 observations are in training dataset and 139 observations are in the test dataset. We will use the training dataset to calculate the `linear discriminant function` by passing it to the `lda()` function of the `MASS` package.
 
 ``` r
 library(MASS)
@@ -744,21 +744,21 @@ wdbc.lda
     ## 
     ## Prior probabilities of groups:
     ##         0         1 
-    ## 0.6378505 0.3621495 
+    ## 0.6116279 0.3883721 
     ## 
     ## Group means:
-    ##         PC1        PC2        PC3        PC4         PC5        PC6
-    ## 0  2.159042 -0.4137349  0.2353578  0.1706320 -0.02677891 0.01803605
-    ## 1 -3.608992  0.6422433 -0.3102083 -0.2190455  0.15641364 0.04978323
+    ##         PC1        PC2        PC3        PC4        PC5         PC6
+    ## 0  2.175770 -0.3110211  0.2809223  0.0878635 -0.1468713  0.04348643
+    ## 1 -3.680665  0.5687389 -0.3382874 -0.2773845  0.1828439 -0.03302622
     ## 
     ## Coefficients of linear discriminants:
     ##             LD1
-    ## PC1 -0.46192354
-    ## PC2  0.17746000
-    ## PC3 -0.20135626
-    ## PC4 -0.20313361
-    ## PC5  0.13543978
-    ## PC6 -0.03737763
+    ## PC1 -0.45279427
+    ## PC2  0.17245630
+    ## PC3 -0.20676053
+    ## PC4 -0.18577816
+    ## PC5  0.18617204
+    ## PC6 -0.03166041
 
 Let's use this to predict by passing the predict function's newdata as the testing dataset.
 
@@ -786,11 +786,10 @@ Our predictions are contained in the `class` attribute.
 (wdbc.lda.predict.class <- wdbc.lda.predict$class)
 ```
 
-    ##   [1] 1 1 1 0 1 1 0 1 1 0 1 0 0 1 1 0 1 0 0 0 0 0 0 0 0 1 0 1 1 0 1 0 1 1 0
-    ##  [36] 0 0 1 0 0 0 1 0 0 1 0 0 0 0 1 1 1 1 0 0 1 1 0 0 1 0 0 1 1 1 1 0 0 0 1
-    ##  [71] 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 0 1 1 1 0 0 0 0 1 1 0 1 0 0 0 0 1 0 0 0
-    ## [106] 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0 0 1 0 1 1 0 1 1 0 1 0 0 0 1
-    ## [141] 1
+    ##   [1] 1 1 1 0 1 1 1 1 1 0 1 0 1 1 0 1 0 1 1 0 1 0 0 1 0 0 0 0 0 0 0 0 0 0 0
+    ##  [36] 0 0 1 1 0 0 0 1 1 0 1 0 0 1 1 1 0 1 1 0 0 0 0 1 1 1 0 0 0 0 1 1 0 0 0
+    ##  [71] 0 0 0 0 0 0 0 0 1 1 0 0 0 1 0 1 0 1 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+    ## [106] 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 0 1 1 0
     ## Levels: 0 1
 
 Next, compare the accuracy of these predictions with the original data.
@@ -803,12 +802,12 @@ A simple way to validate the accuracy of our model in predicting diagnosis (M or
 
     ##                       
     ## wdbc.lda.predict.class  0  1
-    ##                      0 84  5
-    ##                      1  0 52
+    ##                      0 94  2
+    ##                      1  0 43
 
-So according to this output, the model predicted 84 times that the diagnosis is 0 (benign) when the actual observation was 0 (benign) and 5 times it predicted incorrectly. Similarly, the model predicted that the diagnosis is 1 (malignant) 52 times correctly and 0 predicted incorrectly.
+So according to this output, the model predicted 94 times that the diagnosis is 0 (benign) when the actual observation was 0 (benign) and 2 times it predicted incorrectly. Similarly, the model predicted that the diagnosis is 1 (malignant) 43 times correctly and 0 predicted incorrectly.
 
-The accuracy of this model in predicting benign tumors is 0.9438202 or 94.3820225% accurate. The accuracy of this model in predicting malignant tumors is 1 or 100% accurate.
+The accuracy of this model in predicting benign tumors is 0.9791667 or 97.9166667% accurate. The accuracy of this model in predicting malignant tumors is 1 or 100% accurate.
 
 What is the classification accuracy of this model ?
 
@@ -841,14 +840,14 @@ str(splitPlan)
 
     ## List of 3
     ##  $ :List of 2
-    ##   ..$ train: int [1:380] 1 2 4 5 6 7 8 9 10 11 ...
-    ##   ..$ app  : int [1:189] 441 517 268 125 50 242 315 37 73 239 ...
+    ##   ..$ train: int [1:380] 1 4 6 7 9 12 14 15 16 17 ...
+    ##   ..$ app  : int [1:189] 205 183 365 408 94 304 516 461 155 333 ...
     ##  $ :List of 2
-    ##   ..$ train: int [1:379] 1 2 3 7 11 12 13 15 17 19 ...
-    ##   ..$ app  : int [1:190] 512 59 279 249 539 439 56 18 98 10 ...
+    ##   ..$ train: int [1:379] 2 3 5 6 8 9 10 11 13 14 ...
+    ##   ..$ app  : int [1:190] 405 226 239 318 543 428 103 132 276 451 ...
     ##  $ :List of 2
-    ##   ..$ train: int [1:379] 3 4 5 6 8 9 10 12 14 15 ...
-    ##   ..$ app  : int [1:190] 536 497 277 467 326 531 452 76 407 150 ...
+    ##   ..$ train: int [1:379] 1 2 3 4 5 7 8 10 11 12 ...
+    ##   ..$ app  : int [1:190] 552 80 418 484 160 22 59 197 366 497 ...
     ##  - attr(*, "splitmethod")= chr "kwaycross"
 
 Here, k is the number of folds and `splitplan` is the cross validation plan
@@ -869,16 +868,16 @@ for ( i in 1:k ) {
 
     ##    
     ##       0   1
-    ##   0 116   9
-    ##   1   0  64
+    ##   0 120   6
+    ##   1   0  63
     ##    
     ##       0   1
-    ##   0 112  14
-    ##   1   1  63
+    ##   0 111  20
+    ##   1   0  59
     ##    
     ##       0   1
-    ##   0 128   7
-    ##   1   0  55
+    ##   0 125   6
+    ##   1   1  58
 
 ### 10-fold cross validation
 
@@ -904,44 +903,44 @@ for ( i in 1:k ) {
 
     ##    
     ##      0  1
-    ##   0 38  0
+    ##   0 35  4
+    ##   1  1 16
+    ##    
+    ##      0  1
+    ##   0 35  4
     ##   1  0 18
     ##    
     ##      0  1
-    ##   0 38  5
-    ##   1  0 14
+    ##   0 34  0
+    ##   1  0 23
     ##    
     ##      0  1
-    ##   0 37  1
-    ##   1  0 19
+    ##   0 33  3
+    ##   1  0 21
     ##    
     ##      0  1
-    ##   0 41  3
-    ##   1  0 13
+    ##   0 37  2
+    ##   1  0 18
     ##    
     ##      0  1
-    ##   0 36  2
-    ##   1  0 19
+    ##   0 40  1
+    ##   1  0 16
     ##    
     ##      0  1
-    ##   0 33  4
-    ##   1  0 20
+    ##   0 33  2
+    ##   1  0 22
     ##    
     ##      0  1
-    ##   0 34  4
-    ##   1  0 19
+    ##   0 37  2
+    ##   1  0 18
     ##    
     ##      0  1
-    ##   0 32  6
-    ##   1  0 19
+    ##   0 38  1
+    ##   1  0 18
     ##    
     ##      0  1
-    ##   0 37  1
-    ##   1  1 18
-    ##    
-    ##      0  1
-    ##   0 30  1
-    ##   1  0 26
+    ##   0 34  7
+    ##   1  0 16
 
 An advanced way of validating the accuracy of our model is by using a k-fold cross-validation.
 
