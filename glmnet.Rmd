@@ -1,0 +1,239 @@
+---
+title: "Using glmnet"
+author: "Shravan Kuchkula"
+date: "11/19/2017"
+output:
+  github_document:
+    toc: yes
+  html_document:
+    keep_md: yes
+    theme: cosmo
+    toc: yes
+  pdf_document:
+    fig_caption: yes
+    highlight: zenburn
+---
+
+## Getting the data
+
+Import the necessary libraries
+
+```{r message=FALSE, warning=FALSE}
+# Load all the libraries
+installRequiredPackages <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[,"Package"])]
+  if (length(new.pkg))
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+libs <- c("readr", "dplyr", "tidyr", "ggplot2",
+          "glmnet", "ROCR", "MASS"
+          )
+
+installRequiredPackages(libs)
+```
+
+Importing the dataset:
+
+```{r}
+dat <- read.csv("/Users/Shravan/Downloads/Rexample/CancerExample.csv", header = TRUE)
+```
+
+Lets take a peak:
+```{r}
+glimpse(dat)
+```
+
+Do some EDA, there are 2 factor variables: `Set` and `Cohort`. Let's see how the values are distributed amoungst the levels of these factors.
+
+```{r}
+# How many levels of Set variable and the distribution of values ?
+table(dat$Set)
+```
+
+```{r}
+# How many levels of Cohort variable and the distribution of values ?
+table(dat$Cohort)
+```
+
+## glmnet
+
+### Training Set
+
+
+Let's pull the Training data from the df `dat`
+
+```{r}
+#Get Training Set
+dat.train <- dat[which(dat$Set == "Training"),]
+```
+
+> which returns the indicies of the data frame where data$Set == "Training", you then pass those indices to the dat dataframe to extract the Training dataset.
+
+```{r}
+which(dat$Set == "Training")
+```
+
+The next thing to do is to get all the numeric variables out of this training data frame. If you look at the glimpse output above, you will notice that variables with indices 6 to end are the numeric variables we are interested in.
+
+```{r}
+dat.train.x <- dat.train[,6:ncol(dat.train)]
+```
+
+Next, it appears that `Censor` variable can only take values 0 and 1
+
+```{r}
+sum(dat$Censor == 1) + sum(dat$Censor == 0)
+nrow(dat)
+```
+
+OK, so let's put that into a vector of it's own and convert that into a factor:
+```{r}
+dat.train.y <- dat.train$Censor
+dat.train.y <- as.factor(as.character(dat.train.y))
+table(dat.train.y)
+```
+
+Next, since glmnet requires a matrix of predictors, let's convert that dataframe to matrix
+
+```{r}
+dat.train.x <- as.matrix(dat.train.x)
+```
+
+Ok, so we are ready now to invoke the `cv.glmnet` function. (Wierd Syntax!)
+```{r}
+cvfit <- cv.glmnet(dat.train.x, dat.train.y, family = "binomial", 
+                   type.measure = "class", nlambda = 1000)
+
+#plot it
+plot(cvfit)
+```
+
+Next, lets get the `coef` of this cvfit object.
+```{r}
+coef(cvfit, s = "lambda.min")
+```
+
+```{r}
+#Get training set predictions...We know they are biased but lets create ROC's.
+#These are predicted probabilities from logistic model  exp(b)/(1+exp(b))
+fit.pred <- predict(cvfit, newx = dat.train.x, type = "response")
+#Compare the prediction to the real outcome
+head(fit.pred)
+```
+
+```{r}
+head(dat.train.y)
+```
+
+Create ROC curve
+```{r}
+
+#Create ROC curves
+pred <- prediction(fit.pred[,1], dat.train.y)
+roc.perf = performance(pred, measure = "tpr", x.measure = "fpr")
+auc.train <- performance(pred, measure = "auc")
+auc.train <- auc.train@y.values
+
+#Plot ROC
+plot(roc.perf)
+abline(a=0, b= 1) #Ref line indicating poor performance
+text(x = .40, y = .6,paste("AUC = ", round(auc.train[[1]],3), sep = ""))
+```
+
+### Validation Set I
+
+Repeat the same steps on Validation Set I
+```{r}
+#Get Validation Set I
+dat.val1 <- dat[which(dat$Set == "Validation I"),]
+dat.val1.x <- dat.val1[,c(6:ncol(dat))]
+dat.val1.x <- as.matrix(dat.val1.x)
+
+dat.val1.y <- dat.val1$Censor
+dat.val1.y <- as.factor(as.character(dat.val1.y))
+
+```
+
+Run the model
+```{r}
+#Run model from training set on valid set I
+fit.pred1 <- predict(cvfit, newx = dat.val1.x, type = "response")
+```
+
+Check the model:
+```{r}
+#ROC curves
+pred1 <- prediction(fit.pred1[,1], dat.val1.y)
+roc.perf1 = performance(pred1, measure = "tpr", x.measure = "fpr")
+auc.val1 <- performance(pred1, measure = "auc")
+auc.val1 <- auc.val1@y.values
+plot(roc.perf1)
+abline(a=0, b= 1)
+text(x = .40, y = .6,paste("AUC = ", round(auc.val1[[1]],3), sep = ""))
+```
+
+### Validation Set II
+
+Repeat the same for Validation Set II:
+```{r}
+dat.val2 <- dat[which(dat$Set == "Validation II"),]
+dat.val2.x <- dat.val2[,c(6:ncol(dat))]
+dat.val2.x <- as.matrix(dat.val2.x)
+
+dat.val2.y <- dat.val2$Censor
+dat.val2.y <- as.factor(as.character(dat.val2.y))
+```
+
+Run the model:
+```{r}
+fit.pred2 <- predict(cvfit, newx = dat.val2.x, type = "response")
+```
+
+Check the model:
+```{r}
+pred2 <- prediction(fit.pred2[,1], dat.val2.y)
+roc.perf2 = performance(pred2, measure = "tpr", x.measure = "fpr")
+auc.val2 <- performance(pred2, measure = "auc")
+auc.val2 <- auc.val2@y.values
+plot(roc.perf2)
+abline(a=0, b= 1)
+text(x = .42, y = .6,paste("AUC = ", round(auc.val2[[1]],3), sep = ""))
+```
+
+### Validation Set III
+
+Repeat the same for Validation Set III:
+```{r}
+dat.val3 <- dat[which(dat$Set == "Validation III"),]
+dat.val3.x <- dat.val3[,c(6:ncol(dat))]
+dat.val3.x <- as.matrix(dat.val3.x)
+
+dat.val3.y <- dat.val3$Censor
+dat.val3.y <- as.factor(as.character(dat.val3.y))
+```
+
+Run the model:
+```{r}
+fit.pred3 <- predict(cvfit, newx = dat.val3.x, type = "response")
+```
+
+Check the model:
+```{r}
+pred3 <- prediction(fit.pred3[,1], dat.val3.y)
+roc.perf3 = performance(pred3, measure = "tpr", x.measure = "fpr")
+auc.val3 <- performance(pred3, measure = "auc")
+auc.val3 <- auc.val3@y.values
+plot(roc.perf3)
+abline(a=0, b= 1)
+text(x = .4, y = .6,paste("AUC = ", round(auc.val3[[1]],3), sep = ""))
+```
+
+## LDA
+
+
+
+
+
+

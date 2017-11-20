@@ -165,7 +165,7 @@ Once you have a glm() model fit to your dataset, you can predict the outcome (e.
 
 ```{r}
 # Fit glm model: model
-model <- glm(Class ~ ., family = "binomial", data = train)
+model <- glm(Class ~ ., family = "binomial"(link = "logit"), data = train)
 
 # Predict on test: p
 p <- predict(model, test, type = "response")
@@ -186,6 +186,65 @@ p_class <- ifelse(p > 0.5, "M", "R")
 # Create confusion matrix
 confusionMatrix(p_class, test$Class)
 ```
+
+![Confusion Matrix](MachineLearningToolbox_files/confusionMatrix.png)
+
+
+False positive: Predicting that you are pregnant when you are not.
+False negative: Predicting that you are NOT pregnant when you are.
+
+True positive: Predicting that you are pregnant when you are.
+False negative: Predicting that you are not pregrant when you are not.
+
+Theory: A really useful tool for evaluating binary classification models is known as a confusion matrix. This is a matrix of the model's predicted classes vs the actual outcomes in reality. The columns of the confusion matrix are the true classes and rows of the confusion matrix are the predicted classes. The main `diagnol` of the model are the cases when the model is correct. The second diagnol of the confusion matrix is the cases where the model is incorrect. 
+
+True positives are the cases where the model correctly predicted YES.
+False positives are the cases where the model incorrectly predicted YES.
+False negatives are the cases where the model incorrectly predicted NO.
+True negatives are the cases where the model correctly predicted NO.
+
+All 4 of these outcomes are important when evaluating a predictive model's accuracy. 
+
+Steps for generating a confusion matrix:
+
+1. Fit a model to the training set
+2. Next, we predict on the test set and cut the predicted probabilities with a threshold to get class assignments. In other words, the logistic regression model outputs a probability that the object is a Mine ("M") but we need to use these probabilities to make a "binary" decision - Mine "M" or Rock "R".
+3. Turn probabilities into classes and look at their frequencies. In the simplest case, we use 50% as our cut-off and assign anything under 50% as a Rock and over 50% as a Mine. 
+4. Next, we make a two-way frequency table. 
+
+A confusion matrix is a very useful tool for calibrating the output of a model and examining all possible outcomes of your predictions (true positive, true negative, false positive, false negative).
+
+Before you make your confusion matrix, you need to "cut" your predicted probabilities at a given threshold to turn probabilities into class predictions. You can do this easily with the ifelse() function.
+
+You could make such a contingency table with the table() function in base R, but confusionMatrix() in caret yields a lot of useful ancillary statistics in addition to the base rates in the table. You can calculate the confusion matrix (and the associated statistics) using the predicted outcomes as well as the actual outcomes.
+
+The confusion matrix is a two by two table that contains four outcomes produced by a binary classifier. Various measures, such as error-rate, accuracy, specificity, sensitivity, and precision, are derived from the confusion matrix. Moreover, several advanced measures, such as ROC and precision-recall, are based on them.
+
+
+## Class probabilities and class predictions
+
+Manually evaluating classification thresholds is hard work. In order to do this correctly, we have to manually calculate dozens or hundereds of confusion matrices and then visually inspect them and find one we like. This seems un-scientific and requires lots of manual work, is heuristic based, and can easily overlook a particular important threshold. We need a more systematic approach to evaluating classification thresholds. One common approach to this problem is to let the computer iteratively evaluate every possible classfication threshold and then calculate the `true positive rate` and `false positive rate` for each of them. We can then plot the `true positive rate` , `false positive rate` at each possible threshold and visualize the trade-off between two extreme models, i.e, predict all Mines vs predict all Rocks or (100% true positive rate vs 0% false positive rate). The resulting curve is called a `ROC` curve (read it as Rock-curve).
+
+What is the primary value of an ROC curve?
+It evaluates all possible thresholds for splitting predicted probabilities into predicted classes.
+
+ROC curve is a really useful shortcut for summarizing the performance of a classifier over all possible thresholds. This saves you a lot of tedious work computing class predictions for many different thresholds and examining the confusion matrix for each. 
+
+My favorite package for computing ROC curves is caTools, which contains a function called colAUC(). This function is very user-friendly and can actually calculate ROC curves for multiple predictors at once. In this case, you only need to calculate the ROC curve for one predictor.
+
+The function will return a score called AUC (more on that later) and the plotROC = TRUE argument will return the plot of the ROC curve for visual inspection.
+
+Predict probabilities (i.e. type = "response") on the test set, then store the result as p.
+
+```{r}
+# Predict on test: p
+p <- predict(model, test, type = "response")
+
+# Make ROC curve
+colAUC(p, test$Class, plotROC = TRUE)
+```
+
+
 
 
 
