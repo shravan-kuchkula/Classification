@@ -10,6 +10,12 @@ Shravan Kuchkula
     -   [Validation Set II](#validation-set-ii)
     -   [Validation Set III](#validation-set-iii)
 -   [LDA](#lda)
+    -   [Test/Train Split](#testtrain-split)
+    -   [Validation I](#validation-i)
+    -   [Validation II](#validation-ii)
+    -   [Validation III](#validation-iii)
+-   [Cross Validation](#cross-validation)
+-   [Cross-Validation with random shuffle of response variable](#cross-validation-with-random-shuffle-of-response-variable)
 
 Getting the data
 ----------------
@@ -169,16 +175,16 @@ coef(cvfit, s = "lambda.min")
 
     ## 10 x 1 sparse Matrix of class "dgCMatrix"
     ##                        1
-    ## (Intercept) 242.56891301
-    ## V1            0.23749623
-    ## V2            0.08986324
-    ## V3           -0.07860983
-    ## V4            0.07107904
-    ## V5           -2.36991865
-    ## V6            0.10341019
-    ## V7           -1.04211799
-    ## V8            0.29007330
-    ## V9            0.21691323
+    ## (Intercept) 127.62840995
+    ## V1            0.17447257
+    ## V2            0.06554759
+    ## V3            .         
+    ## V4            0.05394215
+    ## V5           -1.47157268
+    ## V6            0.07362001
+    ## V7           -0.71222999
+    ## V8            0.19460120
+    ## V9            0.29983155
 
 ``` r
 #Get training set predictions...We know they are biased but lets create ROC's.
@@ -189,12 +195,12 @@ head(fit.pred)
 ```
 
     ##           1
-    ## 1 0.8261717
-    ## 2 0.5529250
-    ## 3 0.5432194
-    ## 4 0.7493128
-    ## 5 0.4378749
-    ## 6 0.4870482
+    ## 1 0.8835508
+    ## 2 0.5901685
+    ## 3 0.5204144
+    ## 4 0.8019890
+    ## 5 0.4606172
+    ## 6 0.5356991
 
 ``` r
 head(dat.train.y)
@@ -324,3 +330,288 @@ text(x = .4, y = .6,paste("AUC = ", round(auc.val3[[1]],3), sep = ""))
 
 LDA
 ---
+
+Instead of `cv.glmnet` we will run the `lda` to get our model object. We will repeat the same steps as we did above. i.e run the model on test/train split and Validation Set I II III.
+
+### Test/Train Split
+
+Get the training data out:
+
+``` r
+#Training Set
+dat.train <- dat[which(dat$Set == "Training"),]
+dat.train.x <- dat.train[,6:ncol(dat)]
+
+dat.train.y <- dat.train$Censor
+dat.train.y <- as.factor(as.character(dat.train.y))
+```
+
+Run the `lda` function
+
+``` r
+fit.lda <- lda(dat.train.y ~ ., data = dat.train.x)
+```
+
+Predict on the same data that was used to build the model
+
+``` r
+pred.lda <- predict(fit.lda, newdata = dat.train.x)
+```
+
+The `pred.lda` object contains the following attributes
+
+``` r
+ls(pred.lda)
+```
+
+    ## [1] "class"     "posterior" "x"
+
+Here, we are interested in the posterior probabilities. Take a look at the head of the posterior values.
+
+``` r
+head(pred.lda$posterior)
+```
+
+    ##            0         1
+    ## 1 0.04245362 0.9575464
+    ## 2 0.50964384 0.4903562
+    ## 3 0.56081843 0.4391816
+    ## 4 0.24182531 0.7581747
+    ## 5 0.33215521 0.6678448
+    ## 6 0.58684073 0.4131593
+
+This happens to be a matrix, so we need to convert this to a dataframe.
+
+``` r
+class(pred.lda$posterior)
+```
+
+    ## [1] "matrix"
+
+Convert it into a dataframe.
+
+``` r
+preds <- pred.lda$posterior
+preds <- as.data.frame(preds)
+```
+
+Evaluate the model
+
+``` r
+pred <- prediction(preds[,2],dat.train.y)
+roc.perf = performance(pred, measure = "tpr", x.measure = "fpr")
+auc.train <- performance(pred, measure = "auc")
+auc.train <- auc.train@y.values
+plot(roc.perf)
+abline(a=0, b= 1)
+text(x = .40, y = .6,paste("AUC = ", round(auc.train[[1]],3), sep = ""))
+```
+
+![](glmnet_files/figure-markdown_github/unnamed-chunk-33-1.png)
+
+### Validation I
+
+Repeat the same on Validation I
+
+``` r
+#Valid set I
+dat.val1 <- dat[which(dat$Set == "Validation I"),]
+dat.val1.x <- dat.val1[,c(6:ncol(dat))]
+
+dat.val1.y <- dat.val1$Censor
+dat.val1.y <- as.factor(as.character(dat.val1.y))
+```
+
+Predict using the same lda model you created above
+
+``` r
+pred.lda1 <- predict(fit.lda, newdata = dat.val1.x)
+
+preds1 <- pred.lda1$posterior
+preds1 <- as.data.frame(preds1)
+```
+
+Evaluate the model:
+
+``` r
+pred1 <- prediction(preds1[,2],dat.val1.y)
+roc.perf = performance(pred1, measure = "tpr", x.measure = "fpr")
+auc.train <- performance(pred1, measure = "auc")
+auc.train <- auc.train@y.values
+plot(roc.perf)
+abline(a=0, b= 1)
+text(x = .40, y = .6,paste("AUC = ", round(auc.train[[1]],3), sep = ""))
+```
+
+![](glmnet_files/figure-markdown_github/unnamed-chunk-36-1.png)
+
+### Validation II
+
+Repeat the same for Validation II
+
+``` r
+#Valid set II
+dat.val2 <- dat[which(dat$Set == "Validation II"),]
+dat.val2.x <- dat.val2[,c(5:ncol(dat))]
+
+dat.val2.y <- dat.val2$Censor
+dat.val2.y <- as.factor(as.character(dat.val2.y))
+```
+
+Predict
+
+``` r
+pred.lda2 <- predict(fit.lda, newdata = dat.val2.x)
+
+preds2 <- pred.lda2$posterior
+preds2 <- as.data.frame(preds2)
+```
+
+Validate:
+
+``` r
+pred2 <- prediction(preds2[,2],dat.val2.y)
+roc.perf = performance(pred2, measure = "tpr", x.measure = "fpr")
+auc.train <- performance(pred2, measure = "auc")
+auc.train <- auc.train@y.values
+plot(roc.perf)
+abline(a=0, b= 1)
+text(x = .40, y = .6,paste("AUC = ", round(auc.train[[1]],3), sep = ""))
+```
+
+![](glmnet_files/figure-markdown_github/unnamed-chunk-39-1.png)
+
+### Validation III
+
+Repeat the same for Validation III
+
+``` r
+#Valid set III
+dat.val3 <- dat[which(dat$Set == "Validation III"),]
+dat.val3.x <- dat.val3[,c(5:ncol(dat))]
+
+dat.val3.y <- dat.val3$Censor
+dat.val3.y <- as.factor(as.character(dat.val3.y))
+```
+
+Predict:
+
+``` r
+pred.lda3 <- predict(fit.lda, newdata = dat.val3.x)
+
+preds3 <- pred.lda3$posterior
+preds3 <- as.data.frame(preds3)
+```
+
+Evaluate:
+
+``` r
+pred3 <- prediction(preds3[,2],dat.val3.y)
+roc.perf = performance(pred3, measure = "tpr", x.measure = "fpr")
+auc.train <- performance(pred3, measure = "auc")
+auc.train <- auc.train@y.values
+plot(roc.perf)
+abline(a=0, b= 1)
+text(x = .40, y = .6,paste("AUC = ", round(auc.train[[1]],3), sep = ""))
+```
+
+![](glmnet_files/figure-markdown_github/unnamed-chunk-42-1.png)
+
+Cross Validation
+----------------
+
+Suppose we did not have all of these validation data sets. We can assess how well our model building process works through Cross validation. The idea is that we can get an idea of how well the approach is going to perform on new data not yet collected. We will use AUC as the performance matrix.
+
+``` r
+nloops<-50   #number of CV loops
+ntrains<-dim(dat.train.x)[1]  #No. of samples in training data set (nrow also works)
+cv.aucs<-c() #initializing a vector to store the auc results for each CV run
+```
+
+Run a for loop essentially do what we have above
+
+``` r
+for (i in 1:nloops){
+ index<-sample(1:ntrains,60)
+ cvtrain.x<-as.matrix(dat.train.x[index,])
+ cvtest.x<-as.matrix(dat.train.x[-index,])
+ cvtrain.y<-dat.train.y[index]
+ cvtest.y<-dat.train.y[-index]
+ 
+ cvfit <- cv.glmnet(cvtrain.x, cvtrain.y, family = "binomial", type.measure = "class") 
+ fit.pred <- predict(cvfit, newx = cvtest.x, type = "response")
+ pred <- prediction(fit.pred[,1], cvtest.y)
+ roc.perf = performance(pred, measure = "tpr", x.measure = "fpr")
+ auc.train <- performance(pred, measure = "auc")
+ auc.train <- auc.train@y.values
+ 
+ cv.aucs[i]<-auc.train[[1]]
+}
+```
+
+Draw a histogram of cv.aucs
+
+``` r
+hist(cv.aucs)
+```
+
+![](glmnet_files/figure-markdown_github/unnamed-chunk-45-1.png)
+
+Summary of cv.aucs
+
+``` r
+summary(cv.aucs)
+```
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ##  0.6583  0.8067  0.8549  0.8516  0.9042  0.9919
+
+Cross-Validation with random shuffle of response variable
+---------------------------------------------------------
+
+Doing the same procedure for random allocation of response values. Good practice when number of yes/no is not balanced. Note the use of last statement here, we are shuffling the response variable.
+
+``` r
+nloops<-50   #number of CV loops
+ntrains<-dim(dat.train.x)[1]  #No. of samples in training data set
+cv.aucs<-c()
+dat.train.yshuf<-dat.train.y[sample(1:length(dat.train.y))]
+```
+
+Run the for loop
+
+``` r
+for (i in 1:nloops){
+  index<-sample(1:ntrains,60)
+  cvtrain.x<-as.matrix(dat.train.x[index,])
+  cvtest.x<-as.matrix(dat.train.x[-index,])
+  cvtrain.y<-dat.train.yshuf[index]
+  cvtest.y<-dat.train.yshuf[-index]
+  
+  cvfit <- cv.glmnet(cvtrain.x, cvtrain.y, family = "binomial", type.measure = "class") 
+  fit.pred <- predict(cvfit, newx = cvtest.x, type = "response")
+  pred <- prediction(fit.pred[,1], cvtest.y)
+  roc.perf = performance(pred, measure = "tpr", x.measure = "fpr")
+  auc.train <- performance(pred, measure = "auc")
+  auc.train <- auc.train@y.values
+  
+  cv.aucs[i]<-auc.train[[1]]
+}
+```
+
+Visualize the output in a histogram:
+
+``` r
+hist(cv.aucs)
+```
+
+![](glmnet_files/figure-markdown_github/unnamed-chunk-49-1.png)
+
+Summarize the output:
+
+``` r
+summary(cv.aucs)
+```
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ##  0.2341  0.4530  0.5000  0.4701  0.5000  0.5506
