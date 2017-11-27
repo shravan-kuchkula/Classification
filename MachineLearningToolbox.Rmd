@@ -244,8 +244,75 @@ p <- predict(model, test, type = "response")
 colAUC(p, test$Class, plotROC = TRUE)
 ```
 
+Ok, so now it is important to understand the two measures: Sensitivity and Specificity. 
+
+![Sensitivity](MachineLearningToolbox_files/sensitivity.png)
 
 
+![Specificity](MachineLearningToolbox_files/specificity.png)
+
+## Area under the curve (AOC)
+
+From ROC to AUC: Just by looking at the ROC curve starts to give us a good idea of how to evaluate whether or not our predictive model is any good. 
+
+Area under the ROC curve is a very useful, single-number summary of a model's ability to discriminate the positive from the negative class (e.g. mines from rocks). An AUC of 0.5 is no better than random guessing, an AUC of 1.0 is a perfectly predictive model, and an AUC of 0.0 is perfectly anti-predictive (which rarely happens). This is often a much more useful metric than simply ranking models by their accuracy at a set threshold, as different models might require different calibration steps (looking at a confusion matrix at each step) to find the optimal classification threshold for that model.
+
+You can use the trainControl() function in caret to use AUC (instead of acccuracy), to tune the parameters of your models. The twoClassSummary() convenience function allows you to do this easily.
+
+When using twoClassSummary(), be sure to always include the argument classProbs = TRUE or your model will throw an error! (You cannot calculate AUC with just class predictions. You need to have class probabilities as well.)
+
+```{r}
+# Create trainControl object: myControl
+# Customize the trainControl object to use twoClassSummary rather than defaultSummary.
+myControl <- trainControl(
+  method = "cv",
+  number = 10,
+  summaryFunction = twoClassSummary,
+  classProbs = TRUE, # IMPORTANT!
+  verboseIter = TRUE
+)
+```
+
+Now that you have a custom trainControl object, it's easy to fit caret models that use AUC rather than accuracy to tune and evaluate the model. You can just pass your custom trainControl object to the train() function via the trControl argument.
+
+This syntax gives you a convenient way to store a lot of custom modeling parameters and then use them across multiple different calls to train().
+
+```{r warning=FALSE}
+# Train glm with custom trainControl: model
+model <- train(Class ~ ., method = "glm", 
+                data = Sonar,
+                trControl = myControl)
+
+
+# Print model to console
+model
+```
+
+## Random Forests
+
+Random forest models are much more flexible than linear models, and can model complicated nonlinear effects as well as automatically capture interactions between variables. They tend to give very good results on real world data, so let's try one out on the wine quality dataset, where the goal is to predict the human-evaluated quality of a batch of wine, given some of the machine-measured chemical and physical properties of that batch.
+
+Fitting a random forest model is exactly the same as fitting a generalized linear regression model, as you did in the previous chapter. You simply change the method argument in the train function to be "ranger". The ranger package is a rewrite of R's classic randomForest package and fits models much faster, but gives almost exactly the same results. We suggest that all beginners use the ranger package for random forest modeling.
+
+
+Train a random forest called model on the wine quality dataset, wine, such that quality is the response variable and all other variables are explanatory variables.
+Let's import the wine dataset.
+```{r}
+wine <- import("/Users/Shravan/Downloads/wine_100.RDS")
+```
+
+```{r}
+# Fit random forest: model
+model <- train(
+  quality ~ .,
+  tuneLength = 1,
+  data = wine, method = "ranger",
+  trControl = trainControl(method = "cv", number = 5, verboseIter = TRUE)
+)
+
+# Print model to console
+model
+```
 
 
 

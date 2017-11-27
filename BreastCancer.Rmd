@@ -440,6 +440,32 @@ So according to this output, the model predicted  `r confusionMat[1]` times that
 The accuracy of this model in predicting benign tumors is `r confusionMat[1] / (confusionMat[1] + confusionMat[3])`  or `r (confusionMat[1] / (confusionMat[1] + confusionMat[3])) * 100`% accurate.
 The accuracy of this model in predicting malignant tumors is `r confusionMat[4] / (confusionMat[2] + confusionMat[4])` or `r (confusionMat[4] / (confusionMat[2] + confusionMat[4])) * 100`% accurate.
 
+### ROC and AUC
+
+A better way to evaluate the model is using the ROC curve and AUC metric.
+```{r message=FALSE, warning=FALSE}
+library("ROCR")
+```
+
+
+prediction object is contained in `wdbc.lda.predict`. From this we need extract the posterior probabilities. 
+
+```{r}
+# Get the posteriors as a dataframe.
+wdbc.lda.predict.posteriors <- as.data.frame(wdbc.lda.predict$posterior)
+
+# Evaluate the model
+pred <- prediction(wdbc.lda.predict.posteriors[,2], wdbc.pcst.test.df$diagnosis)
+roc.perf = performance(pred, measure = "tpr", x.measure = "fpr")
+auc.train <- performance(pred, measure = "auc")
+auc.train <- auc.train@y.values
+plot(roc.perf)
+abline(a=0, b= 1)
+text(x = .40, y = .6,paste("AUC = ", round(auc.train[[1]],3), sep = ""))
+
+```
+
+
 What is the classification accuracy of this model ?
 
 What is the sensitivity of this model ?

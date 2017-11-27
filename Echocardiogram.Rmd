@@ -1,0 +1,43 @@
+---
+title: "Echocardiogram"
+author: "Shravan Kuchkula"
+date: "11/22/2017"
+output:
+  github_document:
+    toc: yes
+  html_document:
+    keep_md: yes
+    theme: cosmo
+    toc: yes
+  pdf_document:
+    fig_caption: yes
+    highlight: zenburn
+---
+
+## Introduction
+
+Data for classifying if patients will survive for at least one year after a heart attack.
+
+## Getting the data
+
+```{r}
+source('libraries.R')
+```
+
+```{r}
+url <- "https://archive.ics.uci.edu/ml/machine-learning-databases/echocardiogram/echocardiogram.data"
+download.file(url, "echocardiogram.csv")
+
+columnNames <- c("survival", "stillAlive", "age", 
+                 "peri-effusion", "fra-short", "epss",
+                 "lvdd", "wm-score", "wm-index", 
+                 "mult", "name" , "group" , "alive-at-1")
+
+data <- read.csv("echocardiogram.csv", header = FALSE, col.names = columnNames)
+```
+
+```{r}
+glimpse(data)
+```
+nst
+
