@@ -7,6 +7,7 @@ Shravan Kuchkula
 -   [Getting the data](#getting-the-data)
 -   [Exploratory Data Analysis](#exploratory-data-analysis)
     -   [How many observations are "hazardous state (class = 1)" and "non-hazardous state (class = 0)" ?](#how-many-observations-are-hazardous-state-class-1-and-non-hazardous-state-class-0)
+    -   [Adding cardinality](#adding-cardinality)
 -   [Logistic Regression Model](#logistic-regression-model)
 
 Introduction
@@ -64,6 +65,8 @@ table(seismicData$class)
     ## 
     ##    0    1 
     ## 2414  170
+
+### Adding cardinality
 
 Logistic Regression Model
 -------------------------
@@ -163,11 +166,147 @@ plot(ROC, col = "blue")
 text(x = .42, y = .6,paste("AUC = ", round(auc(ROC), 2), sep = ""))
 ```
 
-![](Seismic_files/figure-markdown_github/unnamed-chunk-10-1.png)
+![](Seismic_files/figure-markdown_github/unnamed-chunk-11-1.png)
 
 Dummy variables, missing data and interactions:
 
 ``` r
-seismic_model <- glm(class ~ seismic + seismoacoustic + shift + ghazard,
-                     data = seismicData, family = "binomial")
+seismic_model <- glm(class ~ . , data = seismicData, family = "binomial")
+summary(seismic_model)
 ```
+
+    ## 
+    ## Call:
+    ## glm(formula = class ~ ., family = "binomial", data = seismicData)
+    ## 
+    ## Deviance Residuals: 
+    ##     Min       1Q   Median       3Q      Max  
+    ## -2.1035  -0.3637  -0.2827  -0.1781   3.0300  
+    ## 
+    ## Coefficients: (3 not defined because of singularities)
+    ##                   Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)     -4.426e+00  2.695e-01 -16.425  < 2e-16 ***
+    ## seismicb         3.079e-01  1.844e-01   1.670  0.09500 .  
+    ## seismoacousticb  3.625e-02  1.866e-01   0.194  0.84596    
+    ## seismoacousticc  5.049e-01  6.767e-01   0.746  0.45563    
+    ## shiftW           8.186e-01  2.926e-01   2.798  0.00515 ** 
+    ## genergy         -7.967e-07  4.561e-07  -1.747  0.08066 .  
+    ## gpuls            9.443e-04  2.148e-04   4.397  1.1e-05 ***
+    ## gdenergy        -1.106e-03  2.115e-03  -0.523  0.60094    
+    ## gdpuls          -2.337e-03  2.855e-03  -0.819  0.41302    
+    ## ghazardb        -9.745e-03  3.448e-01  -0.028  0.97746    
+    ## ghazardc        -1.390e+01  4.250e+02  -0.033  0.97391    
+    ## nbumps           3.862e+00  1.460e+00   2.645  0.00817 ** 
+    ## nbumps2         -3.478e+00  1.465e+00  -2.374  0.01760 *  
+    ## nbumps3         -3.452e+00  1.461e+00  -2.362  0.01819 *  
+    ## nbumps4         -3.778e+00  1.522e+00  -2.482  0.01307 *  
+    ## nbumps5         -2.076e+00  2.625e+00  -0.791  0.42915    
+    ## nbumps6                 NA         NA      NA       NA    
+    ## nbumps7                 NA         NA      NA       NA    
+    ## nbumps89                NA         NA      NA       NA    
+    ## energy          -9.632e-06  3.159e-05  -0.305  0.76042    
+    ## maxenergy        1.771e-06  3.121e-05   0.057  0.95475    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## (Dispersion parameter for binomial family taken to be 1)
+    ## 
+    ##     Null deviance: 1253.8  on 2583  degrees of freedom
+    ## Residual deviance: 1073.2  on 2566  degrees of freedom
+    ## AIC: 1109.2
+    ## 
+    ## Number of Fisher Scoring iterations: 15
+
+Collect all the numeric variables and check for multi-collinearity:
+
+``` r
+seismicDataNumeric <- seismicData %>%
+  select(genergy, gpuls, gdenergy, gdpuls, energy, maxenergy)
+```
+
+``` r
+# Create the correlation matrix
+M <- round(cor(seismicDataNumeric), 2)
+
+# Create corrplot
+corrplot(M, method="pie", type = "lower")
+```
+
+![](Seismic_files/figure-markdown_github/unnamed-chunk-14-1.png)
+
+Distribution of all nbumps: Use `cowplot` to display all nbumps in a grid.
+
+``` r
+library(cowplot)
+
+p1 <- seismicData %>%
+  ggplot(aes(x = nbumps)) +
+  geom_histogram() +
+  theme(axis.text.y = element_text(size = 5), axis.text.x = element_text(size = 5),
+        axis.title.y = element_text(size = 10), axis.title.x = element_text(size = 10),
+        axis.ticks = element_blank())
+
+p2 <- seismicData %>%
+  ggplot(aes(x = nbumps2)) +
+  geom_histogram() +
+  theme(axis.text.y = element_text(size = 5), axis.text.x = element_text(size = 5),
+        axis.title.y = element_text(size = 10), axis.title.x = element_text(size = 10),
+        axis.ticks = element_blank())
+
+p3 <- seismicData %>%
+  ggplot(aes(x = nbumps3)) +
+  geom_histogram() +
+  theme(axis.text.y = element_text(size = 5), axis.text.x = element_text(size = 5),
+        axis.title.y = element_text(size = 10), axis.title.x = element_text(size = 10),
+        axis.ticks = element_blank())
+
+p4 <- seismicData %>%
+  ggplot(aes(x = nbumps4)) +
+  geom_histogram() +
+  theme(axis.text.y = element_text(size = 5), axis.text.x = element_text(size = 5),
+        axis.title.y = element_text(size = 10), axis.title.x = element_text(size = 10),
+        axis.ticks = element_blank())
+
+p5 <- seismicData %>%
+  ggplot(aes(x = nbumps5)) +
+  geom_histogram() +
+  theme(axis.text.y = element_text(size = 5), axis.text.x = element_text(size = 5),
+        axis.title.y = element_text(size = 10), axis.title.x = element_text(size = 10),
+        axis.ticks = element_blank())
+
+p6 <- seismicData %>%
+  ggplot(aes(x = nbumps6)) +
+  geom_histogram() +
+  theme(axis.text.y = element_text(size = 5), axis.text.x = element_text(size = 5),
+        axis.title.y = element_text(size = 10), axis.title.x = element_text(size = 10),
+        axis.ticks = element_blank())
+
+p7 <- seismicData %>%
+  ggplot(aes(x = nbumps7)) +
+  geom_histogram() + 
+  theme(axis.text.y = element_text(size = 5), axis.text.x = element_text(size = 5),
+        axis.title.y = element_text(size = 10), axis.title.x = element_text(size = 10),
+        axis.ticks = element_blank())
+
+p89 <- seismicData %>%
+  ggplot(aes(x = nbumps89)) +
+  geom_histogram() +
+  theme(axis.text.y = element_text(size = 5), axis.text.x = element_text(size = 5),
+        axis.title.y = element_text(size = 10), axis.title.x = element_text(size = 10),
+        axis.ticks = element_blank())
+
+plot_grid(p1, p2, p3, p4, p5, p6, p7, p89, ncol = 2)
+```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+![](Seismic_files/figure-markdown_github/unnamed-chunk-15-1.png)
+
+Questions: 1. What is nbumps ? 2. Why are nbumps6-9 all zeros ?

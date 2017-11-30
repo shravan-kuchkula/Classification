@@ -42,6 +42,13 @@ glimpse(seismicData)
 table(seismicData$class)
 ```
 
+### Adding cardinality
+```{r}
+
+```
+
+
+
 ## Logistic Regression Model
 
 Fit a logistic regression model with what you think could be contributing to the seismic hazard. 
@@ -107,12 +114,95 @@ text(x = .42, y = .6,paste("AUC = ", round(auc(ROC), 2), sep = ""))
 Dummy variables, missing data and interactions:
 
 ```{r}
-seismic_model <- glm(class ~ seismic + seismoacoustic + shift + ghazard,
-                     data = seismicData, family = "binomial")
+seismic_model <- glm(class ~ . , data = seismicData, family = "binomial")
+summary(seismic_model)
+```
+
+Collect all the numeric variables and check for multi-collinearity:
+
+```{r}
+seismicDataNumeric <- seismicData %>%
+  select(genergy, gpuls, gdenergy, gdpuls, energy, maxenergy)
+```
+
+```{r}
+# Create the correlation matrix
+M <- round(cor(seismicDataNumeric), 2)
+
+# Create corrplot
+corrplot(M, method="pie", type = "lower")
+```
+
+Distribution of all nbumps: Use `cowplot` to display all nbumps in a grid.
+```{r}
+library(cowplot)
+
+p1 <- seismicData %>%
+  ggplot(aes(x = nbumps)) +
+  geom_histogram() +
+  theme(axis.text.y = element_text(size = 5), axis.text.x = element_text(size = 5),
+        axis.title.y = element_text(size = 10), axis.title.x = element_text(size = 10),
+        axis.ticks = element_blank())
+
+p2 <- seismicData %>%
+  ggplot(aes(x = nbumps2)) +
+  geom_histogram() +
+  theme(axis.text.y = element_text(size = 5), axis.text.x = element_text(size = 5),
+        axis.title.y = element_text(size = 10), axis.title.x = element_text(size = 10),
+        axis.ticks = element_blank())
+
+p3 <- seismicData %>%
+  ggplot(aes(x = nbumps3)) +
+  geom_histogram() +
+  theme(axis.text.y = element_text(size = 5), axis.text.x = element_text(size = 5),
+        axis.title.y = element_text(size = 10), axis.title.x = element_text(size = 10),
+        axis.ticks = element_blank())
+
+p4 <- seismicData %>%
+  ggplot(aes(x = nbumps4)) +
+  geom_histogram() +
+  theme(axis.text.y = element_text(size = 5), axis.text.x = element_text(size = 5),
+        axis.title.y = element_text(size = 10), axis.title.x = element_text(size = 10),
+        axis.ticks = element_blank())
+
+p5 <- seismicData %>%
+  ggplot(aes(x = nbumps5)) +
+  geom_histogram() +
+  theme(axis.text.y = element_text(size = 5), axis.text.x = element_text(size = 5),
+        axis.title.y = element_text(size = 10), axis.title.x = element_text(size = 10),
+        axis.ticks = element_blank())
+
+p6 <- seismicData %>%
+  ggplot(aes(x = nbumps6)) +
+  geom_histogram() +
+  theme(axis.text.y = element_text(size = 5), axis.text.x = element_text(size = 5),
+        axis.title.y = element_text(size = 10), axis.title.x = element_text(size = 10),
+        axis.ticks = element_blank())
+
+p7 <- seismicData %>%
+  ggplot(aes(x = nbumps7)) +
+  geom_histogram() + 
+  theme(axis.text.y = element_text(size = 5), axis.text.x = element_text(size = 5),
+        axis.title.y = element_text(size = 10), axis.title.x = element_text(size = 10),
+        axis.ticks = element_blank())
+
+p89 <- seismicData %>%
+  ggplot(aes(x = nbumps89)) +
+  geom_histogram() +
+  theme(axis.text.y = element_text(size = 5), axis.text.x = element_text(size = 5),
+        axis.title.y = element_text(size = 10), axis.title.x = element_text(size = 10),
+        axis.ticks = element_blank())
+
+plot_grid(p1, p2, p3, p4, p5, p6, p7, p89, ncol = 2)
+
 ```
 
 
 
+
+Questions:
+1. What is nbumps ?
+2. Why are nbumps6-9 all zeros ?
 
 
 
