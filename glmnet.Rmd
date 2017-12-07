@@ -469,3 +469,112 @@ Summarize the output:
 summary(cv.aucs)
 ```
 
+## Learning more about glmnet
+
+```{r}
+library(glmnet)
+```
+
+```{r}
+source("libraries.R")
+sb <- import("seismic-bumps.arff")
+```
+
+```{r}
+# even out the class variable.
+nonh <- sb %>%
+  filter(class == 0)
+
+indexes <- sample(1:nrow(nonh), 200)
+
+nonh <- nonh[indexes,]
+
+h <- sb %>%
+  filter(class == 1)
+
+balancedSB <- rbind(nonh, h)
+
+#shuffle this dataframe
+balancedSB <- balancedSB[sample(1:nrow(balancedSB)),]
+
+```
+
+
+```{r}
+# Calculate N
+N <- nrow(balancedSB)
+
+# Create a random number vector
+rvec <- runif(N)
+
+# Select rows from the dataframe
+balancedSB.train <- balancedSB[rvec < 0.75,]
+balancedSB.test <- balancedSB[rvec >= 0.75,]
+
+# Select rows for the class variable
+train_class <- balancedSB.train$class
+test_class <- balancedSB.test$class
+
+nrow(balancedSB.train)
+nrow(balancedSB.test)
+
+```
+
+```{r}
+#Build the formula for model.matrix
+formula <- as.formula("class ~ .")
+
+#Build the model matrix object
+balancedSBmatrix <- model.matrix(formula, data = balancedSB.train)
+
+# Pass the matrix and class vector
+modelfit <- cv.glmnet(balancedSBmatrix, train_class, family = "binomial", type.measure = "class")
+
+```
+
+```{r}
+plot(modelfit)
+```
+
+```{r}
+coef(modelfit, s = "lambda.min")
+```
+
+
+
+Use this model to predict on the training set.
+```{r}
+mypred <- predict(modelfit, newx = balancedSBmatrix, type = "response")
+mypredObj <- prediction(mypred, train_class)
+myroc.perf <- performance(mypredObj, measure = "tpr", x.measure = "fpr")
+auc.sbtrain <- performance(mypredObj, measure = "auc")
+auc.value <- auc.sbtrain@y.values
+```
+
+
+```{r}
+plot(myroc.perf)
+abline(a=0, b= 1) #Ref line indicating poor performance
+text(x = .40, y = .6,paste("AUC = ", round(auc.value[[1]],3), sep = ""))
+```
+
+Use this model to predict on the test set.
+```{r}
+# Need to first construct model matrix
+#Build the model matrix object for test data
+balancedSBmatrix <- model.matrix(formula, data = balancedSB.test)
+
+mypred <- predict(modelfit, newx = balancedSBmatrix, type = "response")
+mypredObj <- prediction(mypred, test_class)
+myroc.perf <- performance(mypredObj, measure = "tpr", x.measure = "fpr")
+auc.sbtest <- performance(mypredObj, measure = "auc")
+auc.value <- auc.sbtest@y.values
+```
+
+
+```{r}
+plot(myroc.perf)
+abline(a=0, b= 1) #Ref line indicating poor performance
+text(x = .40, y = .6,paste("AUC = ", round(auc.value[[1]],3), sep = ""))
+```
+

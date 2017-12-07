@@ -1,0 +1,34 @@
+---
+title: "Epicurious.Rmd"
+author: "Shravan Kuchkula"
+date: "12/4/2017"
+output:
+  github_document:
+    toc: yes
+  html_document:
+    keep_md: yes
+    theme: cosmo
+    toc: yes
+  pdf_document:
+    fig_caption: yes
+    highlight: zenburn
+---
+
+## Introduction
+Epicurious data set
+
+## Getting the data
+```{r}
+source('libraries.R')
+```
+
+```{r}
+recipies <- read_csv("/Users/Shravan/Downloads/epicurious-recipes-with-rating-and-nutrition/epi_r.csv")
+```
+
+```{r}
+glimpse(recipies)
+```
+
+
+

@@ -16,6 +16,17 @@ output:
 
 ## Introduction
 
+When to use Logistic regression ?
+
+Logistic regression is applicable, for example, if:
+
+  * we want to model the probabilities of a response variable as a function of some explanatory variables, e.g. "success" of admission as a function of gender.
+  * we want to perform descriptive discriminate analyses such as describing the differences between individuals in separate groups as a function of explanatory variables, e.g. student admitted and rejected as a function of gender
+  * we want to predict probabilities that individuals fall into two categories of the binary response as a function of some explanatory variables, e.g. what is the probability that a student is admitted given she is a female
+  * we want to classify individuals into two categories based on explanatory variables, e.g. classify new students into "admitted" or "rejected" group depending on their gender.
+  
+
+
 Logistic regression, also called a logit model, is used to model dichotomous outcome variables. In the logit model the log odds of the outcome is modeled as a linear combination of the predictor variables.
 
 ```{r message=FALSE, warning=FALSE}

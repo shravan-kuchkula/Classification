@@ -16,6 +16,7 @@ Shravan Kuchkula
     -   [Validation III](#validation-iii)
 -   [Cross Validation](#cross-validation)
 -   [Cross-Validation with random shuffle of response variable](#cross-validation-with-random-shuffle-of-response-variable)
+-   [Learning more about glmnet](#learning-more-about-glmnet)
 
 Getting the data
 ----------------
@@ -175,16 +176,16 @@ coef(cvfit, s = "lambda.min")
 
     ## 10 x 1 sparse Matrix of class "dgCMatrix"
     ##                        1
-    ## (Intercept) 127.62840995
-    ## V1            0.17447257
-    ## V2            0.06554759
+    ## (Intercept) 138.87734316
+    ## V1            0.18079199
+    ## V2            0.06770979
     ## V3            .         
-    ## V4            0.05394215
-    ## V5           -1.47157268
-    ## V6            0.07362001
-    ## V7           -0.71222999
-    ## V8            0.19460120
-    ## V9            0.29983155
+    ## V4            0.05564568
+    ## V5           -1.57028904
+    ## V6            0.07629730
+    ## V7           -0.74938231
+    ## V8            0.20474306
+    ## V9            0.29908598
 
 ``` r
 #Get training set predictions...We know they are biased but lets create ROC's.
@@ -195,12 +196,12 @@ head(fit.pred)
 ```
 
     ##           1
-    ## 1 0.8835508
-    ## 2 0.5901685
-    ## 3 0.5204144
-    ## 4 0.8019890
-    ## 5 0.4606172
-    ## 6 0.5356991
+    ## 1 0.8344892
+    ## 2 0.5578333
+    ## 3 0.5402357
+    ## 4 0.7564640
+    ## 5 0.4409044
+    ## 6 0.4934943
 
 ``` r
 head(dat.train.y)
@@ -549,6 +550,10 @@ for (i in 1:nloops){
 }
 ```
 
+    ## Warning: from glmnet Fortran code (error code -99); Convergence for 99th
+    ## lambda value not reached after maxit=100000 iterations; solutions for
+    ## larger lambdas returned
+
 Draw a histogram of cv.aucs
 
 ``` r
@@ -564,7 +569,7 @@ summary(cv.aucs)
 ```
 
     ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    ##  0.6583  0.8067  0.8549  0.8516  0.9042  0.9919
+    ##  0.7085  0.8197  0.8767  0.8613  0.9056  0.9961
 
 Cross-Validation with random shuffle of response variable
 ---------------------------------------------------------
@@ -614,4 +619,246 @@ summary(cv.aucs)
 ```
 
     ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    ##  0.2341  0.4530  0.5000  0.4701  0.5000  0.5506
+    ##  0.3333  0.4500  0.5000  0.4916  0.5207  0.6706
+
+Learning more about glmnet
+--------------------------
+
+``` r
+library(glmnet)
+```
+
+``` r
+source("libraries.R")
+```
+
+    ## Loading required package: magrittr
+
+    ## 
+    ## Attaching package: 'magrittr'
+
+    ## The following object is masked from 'package:tidyr':
+    ## 
+    ##     extract
+
+    ## Loading required package: markdown
+
+    ## Loading required package: knitr
+
+    ## Loading required package: yaml
+
+    ## Loading required package: corrplot
+
+    ## Loading required package: GGally
+
+    ## 
+    ## Attaching package: 'GGally'
+
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     nasa
+
+    ## Loading required package: broom
+
+    ## Loading required package: psych
+
+    ## 
+    ## Attaching package: 'psych'
+
+    ## The following objects are masked from 'package:ggplot2':
+    ## 
+    ##     %+%, alpha
+
+    ## Loading required package: car
+
+    ## 
+    ## Attaching package: 'car'
+
+    ## The following object is masked from 'package:psych':
+    ## 
+    ##     logit
+
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     recode
+
+    ## Loading required package: vtreat
+
+    ## Loading required package: caret
+
+    ## Loading required package: lattice
+
+    ## Loading required package: mlbench
+
+    ## Loading required package: caTools
+
+    ## Loading required package: rio
+
+    ## Loading required package: ranger
+
+    ## Loading required package: pROC
+
+    ## Type 'citation("pROC")' for a citation.
+
+    ## 
+    ## Attaching package: 'pROC'
+
+    ## The following object is masked from 'package:glmnet':
+    ## 
+    ##     auc
+
+    ## The following objects are masked from 'package:stats':
+    ## 
+    ##     cov, smooth, var
+
+    ## Loading required package: reshape2
+
+    ## 
+    ## Attaching package: 'reshape2'
+
+    ## The following object is masked from 'package:tidyr':
+    ## 
+    ##     smiths
+
+    ## Loading required package: cowplot
+
+    ## 
+    ## Attaching package: 'cowplot'
+
+    ## The following object is masked from 'package:ggplot2':
+    ## 
+    ##     ggsave
+
+``` r
+sb <- import("seismic-bumps.arff")
+```
+
+``` r
+# even out the class variable.
+nonh <- sb %>%
+  filter(class == 0)
+
+indexes <- sample(1:nrow(nonh), 200)
+
+nonh <- nonh[indexes,]
+
+h <- sb %>%
+  filter(class == 1)
+
+balancedSB <- rbind(nonh, h)
+
+#shuffle this dataframe
+balancedSB <- balancedSB[sample(1:nrow(balancedSB)),]
+```
+
+``` r
+# Calculate N
+N <- nrow(balancedSB)
+
+# Create a random number vector
+rvec <- runif(N)
+
+# Select rows from the dataframe
+balancedSB.train <- balancedSB[rvec < 0.75,]
+balancedSB.test <- balancedSB[rvec >= 0.75,]
+
+# Select rows for the class variable
+train_class <- balancedSB.train$class
+test_class <- balancedSB.test$class
+
+nrow(balancedSB.train)
+```
+
+    ## [1] 263
+
+``` r
+nrow(balancedSB.test)
+```
+
+    ## [1] 107
+
+``` r
+#Build the formula for model.matrix
+formula <- as.formula("class ~ .")
+
+#Build the model matrix object
+balancedSBmatrix <- model.matrix(formula, data = balancedSB.train)
+
+# Pass the matrix and class vector
+modelfit <- cv.glmnet(balancedSBmatrix, train_class, family = "binomial", type.measure = "class")
+```
+
+``` r
+plot(modelfit)
+```
+
+![](glmnet_files/figure-markdown_github/unnamed-chunk-56-1.png)
+
+``` r
+coef(modelfit, s = "lambda.min")
+```
+
+    ## 22 x 1 sparse Matrix of class "dgCMatrix"
+    ##                             1
+    ## (Intercept)     -1.2022798723
+    ## (Intercept)      .           
+    ## seismicb         .           
+    ## seismoacousticb  .           
+    ## seismoacousticc  .           
+    ## shiftW           0.4977212062
+    ## genergy          .           
+    ## gpuls            0.0003601619
+    ## gdenergy         .           
+    ## gdpuls           .           
+    ## ghazardb         .           
+    ## ghazardc         .           
+    ## nbumps           0.3171250830
+    ## nbumps2          .           
+    ## nbumps3          .           
+    ## nbumps4          .           
+    ## nbumps5          .           
+    ## nbumps6          .           
+    ## nbumps7          .           
+    ## nbumps89         .           
+    ## energy           .           
+    ## maxenergy        .
+
+Use this model to predict on the training set.
+
+``` r
+mypred <- predict(modelfit, newx = balancedSBmatrix, type = "response")
+mypredObj <- prediction(mypred, train_class)
+myroc.perf <- performance(mypredObj, measure = "tpr", x.measure = "fpr")
+auc.sbtrain <- performance(mypredObj, measure = "auc")
+auc.value <- auc.sbtrain@y.values
+```
+
+``` r
+plot(myroc.perf)
+abline(a=0, b= 1) #Ref line indicating poor performance
+text(x = .40, y = .6,paste("AUC = ", round(auc.value[[1]],3), sep = ""))
+```
+
+![](glmnet_files/figure-markdown_github/unnamed-chunk-59-1.png)
+
+Use this model to predict on the test set.
+
+``` r
+# Need to first construct model matrix
+#Build the model matrix object for test data
+balancedSBmatrix <- model.matrix(formula, data = balancedSB.test)
+
+mypred <- predict(modelfit, newx = balancedSBmatrix, type = "response")
+mypredObj <- prediction(mypred, test_class)
+myroc.perf <- performance(mypredObj, measure = "tpr", x.measure = "fpr")
+auc.sbtest <- performance(mypredObj, measure = "auc")
+auc.value <- auc.sbtest@y.values
+```
+
+``` r
+plot(myroc.perf)
+abline(a=0, b= 1) #Ref line indicating poor performance
+text(x = .40, y = .6,paste("AUC = ", round(auc.value[[1]],3), sep = ""))
+```
+
+![](glmnet_files/figure-markdown_github/unnamed-chunk-61-1.png)

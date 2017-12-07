@@ -1,0 +1,121 @@
+---
+title: "Weather.Rmd"
+author: "Shravan Kuchkula"
+date: "12/4/2017"
+output:
+  github_document:
+    toc: yes
+  html_document:
+    keep_md: yes
+    theme: cosmo
+    toc: yes
+  pdf_document:
+    fig_caption: yes
+    highlight: zenburn
+---
+
+## Introduction
+
+Weather dataset from Kaggle
+
+## Getting the data
+
+```{r}
+source('libraries.R')
+```
+
+```{r}
+weather <- read_csv("/Users/Shravan/Downloads/weatherHistory.csv")
+```
+
+```{r}
+glimpse(weather)
+```
+
+Check the cardinality of all character variables to get an idea about which one we can use as a class variable. 
+
+```{r}
+getUniqueValues <- function(x){
+  levels(as.factor(x))
+}
+weather %>%
+  select(starts_with("Formatted"), contains("Summary"), contains("Precip")) %>%
+  sapply(getUniqueValues) %>%
+  lapply(length) %>%
+  glimpse()
+
+```
+
+`Precip Type` looks like a good class variable. Let's check how the values are distributed for this variable.
+
+```{r}
+table(as.factor(weather$`Precip Type`))
+```
+
+Clean the rows where `Precip Type` is not present. 
+
+
+
+```{r}
+table(as.factor(as.character(weather$`Loud Cover`)))
+```
+
+```{r}
+weatherFilter <- weather %>%
+                    filter(`Precip Type` != "null")
+```
+
+```{r}
+weather %>%
+  select(contains("Temp"), contains("Wind"), Humidity, `Visibility (km)`, `Loud Cover`, `Pressure (millibars)`) %>%
+  summary()
+```
+
+```{r}
+library(cowplot)
+
+histGrid <- function(v, varName){
+  
+ p <- weather %>%
+        ggplot(aes(x = v)) +
+        geom_histogram() +
+        xlab(varName) +
+        theme(axis.text.y = element_text(size = 6), axis.text.x = element_text(size = 6),
+        axis.title.y = element_text(size = 10), axis.title.x = element_text(size = 10),
+        axis.ticks = element_blank())
+  
+}
+
+p1 <- histGrid(weather$`Temperature (C)`, "Temperature")
+p2 <- histGrid(weather$`Apparent Temperature (C)`, "App Temp")
+p3 <- histGrid(weather$Humidity, "Humidity")
+p4 <- histGrid(weather$`Wind Speed (km/h)`, "Wind speed")
+p5 <- histGrid(weather$`Wind Bearing (degrees)`, "Wind Bearing")
+p6 <- histGrid(weather$`Visibility (km)`, "Visibility")
+p7 <- histGrid(weather$`Loud Cover`, "cloud cover")
+p8 <- histGrid(weather$`Pressure (millibars)`, "Pressure")
+
+plot_grid(p1, p2, p3, p4, p5, p6, p7, p8, ncol = 2)
+
+  
+```
+```{r}
+detach("package:cowplot", character.only = TRUE)
+```
+
+
+```{r}
+weatherFilter %>%
+  ggplot(aes(x = `Temperature (C)` , y = `Precip Type`)) + 
+  geom_point()
+```
+
+```{r}
+weatherFilter$binaryPrecip <- (as.numeric(as.factor(weatherFilter$`Precip Type`)) - 1)
+weatherFilter %>%
+  ggplot(aes(x = `Temperature (C)`, y = binaryPrecip)) +
+  geom_point() +
+  stat_smooth(method = "glm", method.args = list(family = "binomial"))
+```
+
+
